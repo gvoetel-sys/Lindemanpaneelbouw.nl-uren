@@ -833,7 +833,7 @@ confirmSignatureBtn.addEventListener('click',async()=>{
   const subject='Projecturen '+weekLabel(selectedDate()),body=`Hallo,\n\nHierbij het ondertekende weekoverzicht van ${data.emp} over ${weekLabel(selectedDate())}.\n\n${lines}${specialLines?'\n\nDagregistraties:\n'+specialLines:''}\n\nWeektotaal uren: ${hours(data.total)} uur`;
   closeSignature();
   try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:subject,text:body});show('PDF gedeeld. Kies Gmail.');return}}catch(err){if(err&&err.name==='AbortError')return}
-  downloadBlob(pdf,fileName);show('PDF is gedownload.');setTimeout(()=>{location.href='mailto:gvoetel@lindemanpaneelbouw.nl?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body)},450);
+  downloadBlob(pdf,fileName);show('PDF is gedownload.');setTimeout(()=>{location.href='mailto:g.voetel@lindemanpaneelbouw.nl?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body)},450);
 });
 
 let deferredPrompt=null;
