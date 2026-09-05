@@ -31,6 +31,8 @@ button:disabled{opacity:.45}
 .tableWrap{overflow:auto;max-width:105mm;margin:10px auto 0}
 table{width:100%;max-width:105mm;margin:auto;border-collapse:collapse;font-size:15px}
 th,td{padding:10px 6px;border-bottom:1px solid #d9d9d9;text-align:left;vertical-align:top}
+#todayBody td:nth-child(3){min-width:118px}
+#todayBody td:last-child{white-space:nowrap}
 th{font-size:13px;color:var(--muted)}
 .chartBox{margin-top:12px;padding:8px;border:1px solid #d9d9d9;border-radius:12px}
 canvas{width:100%;height:auto;display:block}
@@ -454,12 +456,24 @@ function render(){
     const sessions=dayProjects
       .filter(p=>String(p.project||'').trim()===x.project)
       .sort((a,b)=>a.start-b.start);
-    const sessionText=sessions.map(p=>`${fmtTime(p.start)}–${fmtTime(p.end)}`).join(' + ');
+
+    const sessionLines=sessions.map((p,i)=>{
+      return `<div style="white-space:nowrap">${i+1}. ${fmtTime(p.start)}–${fmtTime(p.end)}</div>`;
+    }).join('');
+
     return `<tr>
-      <td><strong>${esc(x.project)}</strong><div class="small muted">${x.positions.size?'Positie: '+esc(Array.from(x.positions).join(', ')):''}</div></td>
+      <td>
+        <strong>${esc(x.project)}</strong>
+        <div class="small muted">${x.positions.size?'Positie: '+esc(Array.from(x.positions).join(', ')):''}</div>
+        ${sessions.length>1?`<div class="small" style="font-weight:800;margin-top:4px">${sessions.length} registraties</div>`:''}
+      </td>
       <td>${esc(Array.from(x.worktypes).join(', ')||'-')}</td>
-      <td>${sessionText || (fmtTime(x.firstStart)+'–'+fmtTime(x.lastEnd))}<div class="small muted">${sessions.length>1?'samengevoegd':''}</div></td>
-      <td><strong>${hours(x.totalMs)}</strong></td></tr>`;
+      <td>
+        ${sessionLines || `<div>${fmtTime(x.firstStart)}–${fmtTime(x.lastEnd)}</div>`}
+        ${sessions.length>1?'<div class="small muted" style="margin-top:4px">Tijden samengevoegd</div>':''}
+      </td>
+      <td><strong>${hours(x.totalMs)}</strong></td>
+    </tr>`;
   }).join('');
   const specialRows=daySpecial.map(x=>`<tr>
     <td><strong>${esc(x.type)}</strong><div class="small muted">Dagregistratie</div></td>
@@ -713,7 +727,7 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(installBtn)installBtn.style.display='block'});
 if(installBtn)installBtn.addEventListener('click',async()=>{if(!deferredPrompt){alert('Open deze app via https en kies daarna installeren/toevoegen aan startscherm.');return}deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;installBtn.style.display='none'});
 window.addEventListener('appinstalled',()=>{if(installBtn)installBtn.style.display='none'});
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260905-7').then(r=>r.update()).catch(()=>{}));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260905-8').then(r=>r.update()).catch(()=>{}));
 
 employee.value=localStorage.getItem('employeeName')||'';
 project.value=localStorage.getItem('draftProject')||'';
