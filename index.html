@@ -228,7 +228,7 @@ canvas{width:100%;height:auto;display:block}
     <div id="modeText" class="small muted" style="margin-top:6px"></div>
     <div class="small muted" style="margin-top:4px">Elk project wordt per dag naar boven afgerond op 15 minuten.</div>
     <div class="small" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px 12px">
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#d71920;margin-right:4px"></span>Projecturen</span>
+      <span><strong>Projecten:</strong> elk project eigen kleur</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f59e0b;margin-right:4px"></span>Ziekte</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2563eb;margin-right:4px"></span>Verlof</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#7c3aed;margin-right:4px"></span>ADV</span>
@@ -428,6 +428,15 @@ function selectedDayLogs(){
 function dayLogHoursMs(x){if(x.mode!=='hours')return 0;return roundQuarterMs(Math.max(0,x.end-x.start))}
 function dayLogLabel(x){if(x.mode==='day')return'Hele dag';return `${fmtTime(x.start)}–${fmtTime(x.end)}`}
 
+
+function projectColor(project){
+  const palette=['#d71920','#7a7a7a','#2563eb','#16a34a','#7c3aed','#f59e0b','#0891b2','#be123c','#4f46e5','#15803d'];
+  const s=String(project||'');
+  let hash=0;
+  for(let i=0;i<s.length;i++) hash=((hash<<5)-hash)+s.charCodeAt(i);
+  return palette[Math.abs(hash)%palette.length];
+}
+
 function dayTypeColor(type){
   const colors={
     'Ziekte':'#f59e0b',
@@ -538,7 +547,7 @@ function renderOverview(){
   const fullDays=specialItems.filter(x=>x.mode==='day').length;
   const total=(balancedDays.reduce((sum,d)=>sum+d.total,0)+specialHoursMs)/3600000;
 
-  const projectRows=series.map((s,i)=>`<tr><td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${colors[i%colors.length]}"></span></td>
+  const projectRows=series.map((s,i)=>`<tr><td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${projectColor(s.project)}"></span></td>
     <td><strong>${esc(s.project)}</strong></td><td>${esc(s.position||'-')}</td><td style="text-align:right"><strong>${formatHoursValue(s.total)}</strong></td></tr>`).join('');
   const specialRows=specialItems.map(x=>`<tr>
     <td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${dayTypeColor(x.type)}"></span></td>
@@ -563,11 +572,6 @@ function drawChart(series,colors){
   const indexes=overviewMode==='day'?[dow]:[0,1,2,3,4,5,6];
   const labels=indexes.map(i=>all[i]);
 
-  // Projecturen per dag
-  const projectTotals=[0,0,0,0,0,0,0];
-  series.forEach(s=>s.days.forEach((v,i)=>projectTotals[i]+=v||0));
-
-  // Ziekte/verlof/ADV/feestdag/algemeen per dag
   const specialByDay=[[],[],[],[],[],[],[]];
   const specialSource=selectedDayLogs();
   specialSource.forEach(x=>{
@@ -583,8 +587,9 @@ function drawChart(series,colors){
   });
 
   const totals=indexes.map(i=>{
+    const projects=series.reduce((sum,s)=>sum+(s.days[i]||0),0);
     const special=specialByDay[i].reduce((sum,x)=>sum+x.hours,0);
-    return projectTotals[i]+special;
+    return projects+special;
   });
 
   const maxVal=Math.max(0.25,...totals);
@@ -610,19 +615,19 @@ function drawChart(series,colors){
     const gx=pl+di*(groupW+groupGap);
     const x=gx+Math.max(4,groupW*0.12);
     const bw=Math.max(12,groupW*0.76);
-
     let stackBottom=pt+ch;
 
-    // Projecturen als onderste rode balk
-    const projectH=projectTotals[idx]||0;
-    if(projectH>0){
-      const bh=projectH/max*ch;
+    // Elk project apart in zijn eigen kleur
+    series.forEach(s=>{
+      const v=s.days[idx]||0;
+      if(v<=0)return;
+      const bh=v/max*ch;
       stackBottom-=bh;
-      ctx.fillStyle='#d71920';
+      ctx.fillStyle=projectColor(s.project);
       ctx.fillRect(x,stackBottom,bw,bh);
-    }
+    });
 
-    // Dagregistraties erboven, ieder met eigen kleur
+    // Verlof / ziekte / ADV / feestdag / algemeen erboven
     specialByDay[idx].forEach(item=>{
       if(item.hours<=0)return;
       const bh=item.hours/max*ch;
