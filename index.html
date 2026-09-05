@@ -40,23 +40,31 @@ th,td{padding:10px 6px;border-bottom:1px solid #d9d9d9;text-align:left;vertical-
 th{font-size:13px;color:var(--muted)}
 .chartBox{margin-top:12px;padding:8px;border:1px solid #d9d9d9;border-radius:12px}
 canvas{width:100%;height:auto;display:block}
+.signatureOverlay{display:block;margin:14px 0 0 0;padding:0;background:transparent;position:static}
+.signatureModal{width:100%;background:#fafafa;border:1px solid #ddd;border-radius:14px;padding:14px;box-shadow:none}
+.signaturePad{border:2px solid #cfd3d8;border-radius:12px;background:#fff;touch-action:none;width:100%;height:180px;display:block}
+.signatureActions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+
 .footer{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid #ddd;padding:8px 12px;font-size:13px;color:var(--muted)}
 .footer>div{max-width:680px;margin:auto}
 .install-hint{font-size:13px;color:#777777;margin-top:8px}
 @media(max-width:420px){.wrap{padding-left:10px;padding-right:10px}button{font-size:16px}}
 </style>
 
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#3f3f3f">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
 
 </head>
 <body>
 <div class="wrap">
-  <div style="text-align:center;margin:8px 0 14px">
+  <div style="display:flex;justify-content:center;margin-bottom:12px">
+    <img src="icon-512.png" alt="Lindeman Paneelbouw Projecturen"
+         style="width:118px;height:118px;object-fit:contain;border-radius:24px">
+  </div>
+  <div style="text-align:center;margin-bottom:8px">
     <div style="font-size:22px;font-weight:900;letter-spacing:.3px;color:#4a4a4a">LINDEMAN <span style="color:#d71920">PANEELBOUW</span></div>
     <div style="font-size:14px;font-weight:700;color:#777">Projecturen</div>
   </div>
@@ -126,10 +134,59 @@ canvas{width:100%;height:auto;display:block}
     </div>
   </section>
 
+
+  <section class="card">
+    <div class="title">3. Dag / uren registreren</div>
+    <div class="small muted" style="margin-top:4px">Gebruik dit voor ziekte, verlof, bijzonder verlof, feestdagen of algemeen.</div>
+
+    <label for="dayType">Soort</label>
+    <select id="dayType">
+      <option>Ziekte</option>
+      <option>Verlof</option>
+      <option>Bijzonder verlof ADV</option>
+      <option>Nationale feestdag</option>
+      <option>Algemeen</option>
+    </select>
+
+    <label for="dayMode">Registreren als</label>
+    <select id="dayMode">
+      <option value="day">Hele dag</option>
+      <option value="hours">Uren (van – tot)</option>
+    </select>
+
+    <div id="manualTimeFields" style="display:none">
+      <div class="grid2">
+        <div>
+          <label for="manualFrom">Van</label>
+          <input id="manualFrom" type="time" step="900">
+        </div>
+        <div>
+          <label for="manualTo">Tot</label>
+          <input id="manualTo" type="time" step="900">
+        </div>
+      </div>
+      <div class="small muted" style="margin-top:6px">De berekende uren worden naar boven afgerond op 15 minuten.</div>
+    </div>
+
+    <button id="addDayBtn" class="primary" type="button" style="margin-top:12px">＋ Toevoegen aan werkdag</button>
+  </section>
+
   <section class="card">
     <div class="status">
       <span class="title">Uren van vandaag</span>
-      <button id="mailBtn" class="primary" type="button" style="width:auto;min-height:44px;padding:9px 12px;font-size:14px">✉ Mail week</button>
+      <button id="mailBtn" class="primary" type="button" style="width:auto;min-height:44px;padding:9px 12px;font-size:14px">✍ Handtekening & export</button>
+    </div>
+    <div id="signatureOverlay" class="signatureOverlay" aria-hidden="false">
+      <div class="signatureModal">
+        <div class="title" style="font-size:20px;margin-bottom:6px">Handtekening weekoverzicht</div>
+        <div class="small muted" style="margin-bottom:10px">Zet hieronder je handtekening met je vinger voordat je de week exporteert.</div>
+        <canvas id="signaturePad" class="signaturePad"></canvas>
+        <div class="signatureActions">
+          <button id="clearSignatureBtn" class="secondary" type="button">Handtekening wissen</button>
+          <button id="cancelSignatureBtn" class="secondary" type="button" style="display:none">Annuleren</button>
+        </div>
+        <button id="confirmSignatureBtn" class="primary" type="button" style="margin-top:10px">✓ Week exporteren en mail openen</button>
+      </div>
     </div>
     <div class="tableWrap">
       <table>
@@ -138,7 +195,7 @@ canvas{width:100%;height:auto;display:block}
       </table>
     </div>
     <div class="grid2" style="margin-top:10px">
-      <button id="allBtn" class="secondary" type="button">⬇ Download alle registraties als PDF</button>
+      <button id="allBtn" class="secondary" type="button">Alle registraties</button>
       <button id="clearBtn" class="secondary" type="button">Wis gegevens</button>
     </div>
     <div style="margin-top:9px">
@@ -153,17 +210,21 @@ canvas{width:100%;height:auto;display:block}
       <button id="modeBtn" class="primary" type="button" style="width:auto;min-height:44px;padding:9px 12px;font-size:14px">Week overzicht →</button>
     </div>
     <div id="modeText" class="small muted" style="margin-top:6px"></div>
+    <div class="small muted" style="margin-top:4px">Elk project wordt per dag naar boven afgerond op 15 minuten. Het dagtotaal is de som van de afgeronde projecturen.</div>
 
-    <div style="margin-top:10px">
-      <button id="graphBtn" class="secondary" type="button">📊 Grafiek zien</button>
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>Kleur</th><th>Project</th><th>Positie</th><th style="text-align:right">Uren</th></tr></thead>
+        <tbody id="overviewBody"></tbody>
+      </table>
     </div>
 
-    <div id="graphWrap" class="chartBox" style="display:none">
-      <div id="graphLegend" style="display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px"></div>
+    <div class="chartBox">
       <canvas id="chart" width="640" height="300"></canvas>
     </div>
   </section>
 </div>
+
 
 <div class="footer"><div>Gegevens worden alleen lokaal op dit apparaat opgeslagen.</div></div>
 
@@ -177,13 +238,15 @@ const project=$('project'), position=$('position'), description=$('description')
 const startBtn=$('startBtn'), stopBtn=$('stopBtn'), endDayBtn=$('endDayBtn');
 const statusPill=$('statusPill'), timerArea=$('timerArea'), elapsed=$('elapsed'), runningInfo=$('runningInfo');
 const todayBody=$('todayBody'), notice=$('notice'), allBtn=$('allBtn'), clearBtn=$('clearBtn'), restoreBtn=$('restoreBtn'), mailBtn=$('mailBtn');
-const modeBtn=$('modeBtn'), modeText=$('modeText'), graphBtn=$('graphBtn'), graphWrap=$('graphWrap'), graphLegend=$('graphLegend'), chart=$('chart'), installBtn=$('installBtn');
+const modeBtn=$('modeBtn'), modeText=$('modeText'), overviewBody=$('overviewBody'), chart=$('chart'), installBtn=$('installBtn');
+const dayType=$('dayType'), dayMode=$('dayMode'), manualTimeFields=$('manualTimeFields'), manualFrom=$('manualFrom'), manualTo=$('manualTo'), addDayBtn=$('addDayBtn');
+const signatureOverlay=$('signatureOverlay'), signaturePad=$('signaturePad'), clearSignatureBtn=$('clearSignatureBtn'), cancelSignatureBtn=$('cancelSignatureBtn'), confirmSignatureBtn=$('confirmSignatureBtn');
 
 let logs = safeParse('projectLogs', []);
+let dayLogs = safeParse('dayLogs', []);
 let active = safeParse('activeProject', null);
 let overviewMode = localStorage.getItem('overviewMode') === 'week' ? 'week' : 'day';
 let clearedDayKey = localStorage.getItem('clearedDayKey') || '';
-let showGraph = localStorage.getItem('showGraph') === '1';
 let timer=null;
 
 function safeParse(key,fallback){
@@ -198,7 +261,44 @@ function formatKey(k){ if(!k)return''; const [y,m,d]=k.split('-'); return `${d}-
 function fmtTime(ts){ return new Date(ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}); }
 function fmtDate(ts){ return new Date(ts).toLocaleDateString('nl-NL'); }
 function esc(s=''){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
-function hours(ms){ return (ms/3600000).toFixed(2).replace('.',','); }
+const QUARTER_MS=15*60*1000;
+function roundQuarterMs(ms){ return Math.max(0,Math.ceil(ms/QUARTER_MS)*QUARTER_MS); }
+function hours(ms){ return (roundQuarterMs(ms)/3600000).toFixed(2).replace('.',','); }
+function formatHoursValue(h){ return Number(h||0).toFixed(2).replace('.',','); }
+
+// Rond elk project per dag afzonderlijk naar boven af op 15 minuten.
+// Het dagtotaal is daarna de som van alle afgeronde projecturen.
+// Zo blijft ieder project met gewerkte tijd zichtbaar in overzicht en grafiek.
+function balancedDayProjects(items){
+  const raw={};
+  const positions={};
+  items.forEach(x=>{
+    const key=String(x.project||'').trim();
+    raw[key]=(raw[key]||0)+netMs(x.start,x.end);
+    if(x.position){
+      if(!positions[key])positions[key]=new Set();
+      positions[key].add(String(x.position).trim());
+    }
+  });
+  const projects={};
+  const projectPositions={};
+  let total=0;
+  Object.entries(raw).forEach(([key,ms])=>{
+    const rounded=roundQuarterMs(ms);
+    if(rounded>0){
+      projects[key]=rounded;
+      projectPositions[key]=positions[key] ? Array.from(positions[key]).filter(Boolean).join(', ') : '';
+      total+=rounded;
+    }
+  });
+  return {projects,projectPositions,total};
+}
+
+function balancedRange(items){
+  const days={};
+  items.forEach(x=>{ const d=dateKey(x.start); (days[d]||(days[d]=[])).push(x); });
+  return Object.entries(days).map(([date,dayItems])=>({date,...balancedDayProjects(dayItems)}));
+}
 function duration(ms){
   let s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600); s%=3600; const m=Math.floor(s/60); s%=60;
   return [h,m,s].map(v=>String(v).padStart(2,'0')).join(':');
@@ -224,6 +324,7 @@ function hide(){ notice.style.display='none'; }
 
 function save(){
   localStorage.setItem('projectLogs',JSON.stringify(logs));
+  localStorage.setItem('dayLogs',JSON.stringify(dayLogs));
   localStorage.setItem('activeProject',JSON.stringify(active));
   localStorage.setItem('employeeName',employee.value.trim());
   localStorage.setItem('draftProject',project.value);
@@ -247,15 +348,6 @@ function weekLabel(key){
   const r=isoWeekRange(key);
   return `${new Date(r.start).toLocaleDateString('nl-NL')} t/m ${new Date(r.end).toLocaleDateString('nl-NL')}`;
 }
-function colorForKey(key){
-  let hash=0;
-  for(let i=0;i<key.length;i++){ hash=((hash<<5)-hash)+key.charCodeAt(i); hash|=0; }
-  const hue=Math.abs(hash)%360;
-  const sat=65 + (Math.abs(hash)%15);
-  const light=42 + (Math.abs(hash)%10);
-  return `hsl(${hue} ${sat}% ${light}%)`;
-}
-
 function overviewLogs(){
   if(overviewMode==='day'){
     const k=selectedDate();
@@ -264,6 +356,30 @@ function overviewLogs(){
   }
   const r=isoWeekRange(selectedDate());
   return logs.filter(x=>x.start>=r.start&&x.start<=r.end);
+}
+
+
+function makeDateTime(dateStr,timeStr){
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const [hh,mm]=timeStr.split(':').map(Number);
+  return new Date(y,m-1,d,hh,mm,0,0).getTime();
+}
+function selectedDayLogs(){
+  const k=selectedDate();
+  if(overviewMode==='day') return dayLogs.filter(x=>x.date===k);
+  const r=isoWeekRange(k);
+  return dayLogs.filter(x=>{
+    const t=makeDateTime(x.date,'12:00');
+    return t>=r.start && t<=r.end;
+  });
+}
+function dayLogHoursMs(x){
+  if(x.mode!=='hours') return 0;
+  return roundQuarterMs(netMs(x.start,x.end));
+}
+function dayLogLabel(x){
+  if(x.mode==='day') return 'Hele dag';
+  return `${fmtTime(x.start)}–${fmtTime(x.end)}`;
 }
 
 function render(){
@@ -283,13 +399,22 @@ function render(){
 
   const tk=todayKey();
   const todays=clearedDayKey===tk?[]:logs.filter(x=>dateKey(x.start)===tk).sort((a,b)=>b.start-a.start);
-  todayBody.innerHTML=todays.length?todays.map(x=>`
+  const todaySpecial=dayLogs.filter(x=>x.date===tk).sort((a,b)=>(b.created||0)-(a.created||0));
+  const projectRows=todays.map(x=>`
     <tr>
       <td><strong>${esc(x.project)}</strong><div class="small muted">${x.position?'Positie: '+esc(x.position):''}</div></td>
       <td>${esc(x.worktype)}</td>
       <td>${fmtTime(x.start)}–${fmtTime(x.end)}</td>
       <td>${hours(netMs(x.start,x.end))}</td>
-    </tr>`).join(''):'<tr><td colspan="4" class="muted">Nog geen uren geregistreerd.</td></tr>';
+    </tr>`).join('');
+  const specialRows=todaySpecial.map(x=>`
+    <tr>
+      <td><strong>${esc(x.type)}</strong><div class="small muted">Dagregistratie</div></td>
+      <td>${x.mode==='day'?'Hele dag':'Uren'}</td>
+      <td>${x.mode==='day'?'—':dayLogLabel(x)}</td>
+      <td>${x.mode==='day'?'1 dag':hours(dayLogHoursMs(x))}</td>
+    </tr>`).join('');
+  todayBody.innerHTML=(projectRows+specialRows)||'<tr><td colspan="4" class="muted">Nog geen uren geregistreerd.</td></tr>';
 
   renderOverview();
 }
@@ -297,56 +422,112 @@ function render(){
 function renderOverview(){
   modeBtn.textContent=overviewMode==='day'?'Week overzicht →':'← Dag overzicht';
   modeText.textContent=overviewMode==='day'?`Dagoverzicht • ${formatKey(selectedDate())}`:`Weekoverzicht • ${weekLabel(selectedDate())}`;
-  graphBtn.textContent = showGraph ? '📉 Grafiek verbergen' : '📊 Grafiek zien';
-  graphWrap.style.display = showGraph ? 'block' : 'none';
 
   const items=overviewLogs(), map={};
-  items.forEach(x=>{
-    const k=`${x.project}|||${x.position||''}`;
-    if(!map[k])map[k]={key:k,project:x.project,position:x.position||'',days:[0,0,0,0,0,0,0],total:0};
-    let idx=new Date(x.start).getDay()-1;if(idx<0)idx=6;
-    const h=netMs(x.start,x.end)/3600000;
-    map[k].days[idx]+=h; map[k].total+=h;
+  const balancedDays=balancedRange(items);
+  balancedDays.forEach(day=>{
+    const [yy,mm,dd]=day.date.split('-').map(Number);
+    let idx=new Date(yy,mm-1,dd).getDay()-1;if(idx<0)idx=6;
+    Object.entries(day.projects).forEach(([k,ms])=>{
+      const pos=(day.projectPositions&&day.projectPositions[k])||'';
+      if(!map[k])map[k]={key:k,project:k,positions:new Set(),days:[0,0,0,0,0,0,0],total:0};
+      if(pos) pos.split(',').map(v=>v.trim()).filter(Boolean).forEach(v=>map[k].positions.add(v));
+      const h=ms/3600000;
+      map[k].days[idx]+=h; map[k].total+=h;
+    });
   });
 
-  const series=Object.values(map).sort((a,b)=>String(a.project).localeCompare(String(b.project))||String(a.position).localeCompare(String(b.position)));
-  const colors=series.map(s=>colorForKey(s.key));
+  const series=Object.values(map).map(s=>({...s,position:Array.from(s.positions||[]).join(', ')})).sort((a,b)=>String(a.project).localeCompare(String(b.project)));
+  const colors=['#d71920','#777777','#a81116','#a81116','#4a4a4a','#d71920','#8a8a8a','#a81116','#555555','#c5161d','#8f1116','#666666'];
+  const specialItems=selectedDayLogs();
+  const specialHoursMs=specialItems.reduce((sum,x)=>sum+dayLogHoursMs(x),0);
+  const fullDays=specialItems.filter(x=>x.mode==='day').length;
+  const total=(balancedDays.reduce((sum,d)=>sum+d.total,0)+specialHoursMs)/3600000;
 
-  if(showGraph){
-    graphLegend.innerHTML = series.length
-      ? series.map((s,i)=>`<div style="display:flex;align-items:center;gap:6px;background:#f6f6f6;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:13px">
-          <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${colors[i]}"></span>
-          <span><strong>${esc(s.project)}</strong>${s.position ? ' - ' + esc(s.position) : ''}</span>
-        </div>`).join('')
-      : '<div class="small muted">Nog geen projecten voor deze selectie.</div>';
-    drawChart(series,colors);
-  } else {
-    graphLegend.innerHTML = '';
-    const ctx=chart.getContext('2d');
-    ctx.clearRect(0,0,chart.width,chart.height);
-  }
+  const projectOverviewRows=series.map((s,i)=>`
+    <tr>
+      <td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${colors[i%colors.length]}"></span></td>
+      <td><strong>${esc(s.project)}</strong></td>
+      <td>${esc(s.position||'-')}</td>
+      <td style="text-align:right"><strong>${formatHoursValue(s.total)}</strong></td>
+    </tr>`).join('');
+  const specialOverviewRows=specialItems.map(x=>`
+    <tr>
+      <td>•</td>
+      <td><strong>${esc(x.type)}</strong></td>
+      <td>${x.mode==='day'?'Hele dag':dayLogLabel(x)}</td>
+      <td style="text-align:right"><strong>${x.mode==='day'?'1 dag':hours(dayLogHoursMs(x))}</strong></td>
+    </tr>`).join('');
+  const summaryRow=`<tr><td></td><td colspan="2"><strong>${overviewMode==='day'?'Dagtotaal uren':'Weektotaal uren'}</strong>${fullDays?`<div class="small muted">+ ${fullDays} hele dag${fullDays===1?'':'en'}</div>`:''}</td><td style="text-align:right"><strong>${formatHoursValue(total)}</strong></td></tr>`;
+  overviewBody.innerHTML=(projectOverviewRows+specialOverviewRows) ? projectOverviewRows+specialOverviewRows+summaryRow : `
+    <tr><td colspan="4" class="muted">Geen registraties in dit ${overviewMode==='day'?'dag':'week'}overzicht.</td></tr>`;
+
+  drawChart(series,colors);
 }
 
 function drawChart(series,colors){
-  const ctx=chart.getContext('2d'), ratio=window.devicePixelRatio||1, w=chart.clientWidth||640, h=300;
+  const ctx=chart.getContext('2d'), ratio=window.devicePixelRatio||1, w=chart.clientWidth||640, h=340;
   chart.width=Math.floor(w*ratio);chart.height=Math.floor(h*ratio);chart.style.height=h+'px';
   ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,w,h);
+
   const all=['Ma','Di','Wo','Do','Vr','Za','Zo'];
   const [y,m,d]=selectedDate().split('-').map(Number);let dow=new Date(y,m-1,d).getDay()-1;if(dow<0)dow=6;
   const indexes=overviewMode==='day'?[dow]:[0,1,2,3,4,5,6], labels=indexes.map(i=>all[i]);
-  const totals=indexes.map(i=>series.reduce((s,x)=>s+x.days[i],0)), max=Math.max(1,...totals);
-  const pl=38,pr=10,pt=20,pb=35,cw=w-pl-pr,ch=h-pt-pb,gap=10,bw=(cw-gap*(labels.length-1))/labels.length;
+  const totals=indexes.map(i=>series.reduce((sum,x)=>sum+x.days[i],0));
+  const projectMax=Math.max(0.25,...indexes.flatMap(i=>series.map(s=>s.days[i]||0)));
+  const max=Math.ceil(projectMax/0.25)*0.25;
+
+  const pl=46,pr=10,pt=42,pb=42,cw=w-pl-pr,ch=h-pt-pb;
+  const groupGap=12;
+  const groupW=(cw-groupGap*(labels.length-1))/labels.length;
+  const activeSeries=Math.max(1,series.length);
+  const innerGap=series.length>1?3:0;
+  const barW=Math.max(3,(groupW-innerGap*(activeSeries-1))/activeSeries);
+
   ctx.font='12px system-ui';ctx.strokeStyle='#d9d9d9';ctx.fillStyle='#777777';
-  for(let i=0;i<=4;i++){const val=max*i/4,yc=pt+ch-ch*i/4;ctx.beginPath();ctx.moveTo(pl,yc);ctx.lineTo(pl+cw,yc);ctx.stroke();ctx.fillText(val.toFixed(1).replace('.',','),2,yc+4);}
+  for(let i=0;i<=4;i++){
+    const val=max*i/4,yc=pt+ch-ch*i/4;
+    ctx.beginPath();ctx.moveTo(pl,yc);ctx.lineTo(pl+cw,yc);ctx.stroke();
+    ctx.textAlign='right';ctx.fillStyle='#777777';ctx.fillText(formatHoursValue(val),pl-6,yc+4);
+  }
+  ctx.textAlign='left';ctx.fillStyle='#777777';ctx.fillText('uren',4,16);
+
   labels.forEach((lab,di)=>{
-    const idx=indexes[di],x=pl+di*(bw+gap);let used=0;
-    series.forEach((s,si)=>{const v=s.days[idx];if(v<=0)return;const bh=v/max*ch,yy=pt+ch-used-bh;ctx.fillStyle=colors[si%colors.length];ctx.fillRect(x,yy,bw,bh);used+=bh;});
-    ctx.fillStyle='#3f3f3f';ctx.textAlign='center';ctx.fillText(lab,x+bw/2,h-10);
-    if(totals[di]>0){const yy=pt+ch-totals[di]/max*ch;ctx.fillText(totals[di].toFixed(2).replace('.',','),x+bw/2,Math.max(pt+10,yy-6));}
+    const idx=indexes[di];
+    const gx=pl+di*(groupW+groupGap);
+    series.forEach((s,si)=>{
+      const v=s.days[idx]||0;
+      if(v<=0)return;
+      const bh=v/max*ch;
+      const x=gx+si*(barW+innerGap);
+      const yy=pt+ch-bh;
+      ctx.fillStyle=colors[si%colors.length];
+      ctx.fillRect(x,yy,barW,bh);
+
+      const txt=formatHoursValue(v)+' u';
+      ctx.font='bold 10px system-ui';ctx.textAlign='center';
+      if(barW>=30 && bh>=18){
+        ctx.fillStyle='#ffffff';
+        ctx.fillText(txt,x+barW/2,yy+Math.min(bh-5,16));
+      }else if(barW>=20){
+        ctx.fillStyle='#333333';
+        ctx.save();
+        ctx.translate(x+barW/2,Math.max(pt+8,yy-3));
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText(txt,0,0);
+        ctx.restore();
+      }
+    });
+
+    ctx.font='12px system-ui';ctx.fillStyle='#3f3f3f';ctx.textAlign='center';
+    ctx.fillText(lab,gx+groupW/2,h-14);
+    if(totals[di]>0){
+      ctx.font='bold 11px system-ui';
+      ctx.fillText('Totaal '+formatHoursValue(totals[di])+' u',gx+groupW/2,24);
+    }
   });
   ctx.textAlign='left';
 }
-
 function stopActive(){
   if(!active)return;
   logs.push({...active,end:Date.now()});
@@ -375,7 +556,39 @@ startBtn.addEventListener('click',()=>{
     start:Date.now()
   };
   save();
-  render();
+  
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installBtn) installBtn.style.display = 'block';
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) {
+      alert('Open deze app via een webadres (https) en kies daarna installeren/toevoegen aan startscherm.');
+      return;
+    }
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  if (installBtn) installBtn.style.display = 'none';
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js?v=20260905-2').then(r=>r.update()).catch(() => {});
+  });
+}
+
+render();
 });
 
 stopBtn.addEventListener('click',()=>{
@@ -395,15 +608,38 @@ endDayBtn.addEventListener('click',()=>{
   show('Werkdag opgeslagen. Het dagoverzicht is leeggemaakt; de uren blijven in het weekoverzicht.');
 });
 
+
+dayMode.addEventListener('change',()=>{
+  manualTimeFields.style.display=dayMode.value==='hours'?'block':'none';
+});
+
+addDayBtn.addEventListener('click',()=>{
+  hide();
+  if(active){ show('Stop eerst het actieve project voordat je een dagregistratie toevoegt.'); return; }
+  const date=selectedDate();
+  const entry={
+    id:'d'+Date.now()+Math.random().toString(16).slice(2),
+    employee:employee.value.trim(),
+    date,
+    type:dayType.value,
+    mode:dayMode.value,
+    created:Date.now()
+  };
+  if(dayMode.value==='hours'){
+    if(!manualFrom.value || !manualTo.value){ show('Vul Van en Tot in.'); return; }
+    entry.start=makeDateTime(date,manualFrom.value);
+    entry.end=makeDateTime(date,manualTo.value);
+    if(entry.end<=entry.start){ show('De tijd bij Tot moet later zijn dan Van.'); return; }
+  }
+  dayLogs.push(entry);
+  save();
+  render();
+  show(`${dayType.value} is toegevoegd voor ${formatKey(date)}.`);
+});
+
 modeBtn.addEventListener('click',()=>{
   overviewMode=overviewMode==='day'?'week':'day';
   localStorage.setItem('overviewMode',overviewMode);
-  renderOverview();
-});
-
-graphBtn.addEventListener('click',()=>{
-  showGraph = !showGraph;
-  localStorage.setItem('showGraph', showGraph ? '1' : '0');
   renderOverview();
 });
 
@@ -421,232 +657,127 @@ clearBtn.addEventListener('click',()=>{
   if(active){show('Stop eerst het actieve project.');return;}
   if(confirm('Alle opgeslagen uren wissen?')){
     localStorage.setItem('deletedProjectLogsBackup',JSON.stringify(logs));
-    logs=[];save();render();show('Gegevens gewist. Gebruik Herstel als dit per ongeluk was.');
+    localStorage.setItem('deletedDayLogsBackup',JSON.stringify(dayLogs));
+    logs=[];dayLogs=[];save();render();show('Gegevens gewist. Gebruik Herstel als dit per ongeluk was.');
   }
 });
 restoreBtn.addEventListener('click',()=>{
-  const b=safeParse('deletedProjectLogsBackup',null);
-  if(!Array.isArray(b)||!b.length){show('Geen herstelkopie beschikbaar.');return;}
-  if(confirm('Laatst gewiste gegevens terugzetten?')){logs=b;save();render();show('Gegevens hersteld.');}
+  const b=safeParse('deletedProjectLogsBackup',[]);
+  const d=safeParse('deletedDayLogsBackup',[]);
+  if((!Array.isArray(b)||!b.length)&&(!Array.isArray(d)||!d.length)){show('Geen herstelkopie beschikbaar.');return;}
+  if(confirm('Laatst gewiste gegevens terugzetten?')){logs=Array.isArray(b)?b:[];dayLogs=Array.isArray(d)?d:[];save();render();show('Gegevens hersteld.');}
 });
 
 allBtn.addEventListener('click',()=>{
-  hide();
-  if(!logs.length){
-    show('Er zijn nog geen registraties om als PDF te downloaden.');
-    return;
-  }
-
-  function pdfSafe(s){
-    return String(s ?? '')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^\x20-\x7E]/g,' ')
-      .replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
-  }
-
-  const sorted=logs.slice().sort((a,b)=>a.start-b.start);
-  const lines=[];
-  lines.push('LINDEMAN PANEELBOUW - ALLE PROJECTUREN');
-  lines.push('');
-  lines.push('Gegenereerd: '+new Date().toLocaleString('nl-NL'));
-  lines.push('');
-
-  let lastDate='';
-  let grandTotal=0;
-
-  sorted.forEach(x=>{
-    const d=fmtDate(x.start);
-    if(d!==lastDate){
-      if(lastDate) lines.push('');
-      lines.push(d);
-      lastDate=d;
-    }
-    const ms=netMs(x.start,x.end);
-    grandTotal+=ms;
-    lines.push(
-      'Project '+(x.project||'-')+
-      ' | Positie '+(x.position||'-')+
-      ' | '+(x.worktype||'-')+
-      ' | '+fmtTime(x.start)+'-'+fmtTime(x.end)+
-      ' | '+hours(ms)+' uur'
-    );
-    if(x.description) lines.push('  '+x.description);
-  });
-
-  lines.push('');
-  lines.push('Totaal: '+hours(grandTotal)+' uur');
-
-  const pageW=595, pageH=842, marginX=42, topY=800, lineH=16;
-  const maxLines=Math.floor((topY-55)/lineH);
-  const pages=[];
-  for(let i=0;i<lines.length;i+=maxLines) pages.push(lines.slice(i,i+maxLines));
-
-  const objects=[];
-  const addObj=body=>{ objects.push(body); return objects.length; };
-
-  const fontObj=addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
-  const boldFontObj=addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
-
-  const pageObjs=[];
-  const contentObjs=[];
-
-  pages.forEach((pageLines,pageIndex)=>{
-    let content='BT\n/F1 10 Tf\n';
-    let y=topY;
-    pageLines.forEach((line,idx)=>{
-      const isHeading = line==='LINDEMAN PANEELBOUW - ALLE PROJECTUREN' || /^\d{1,2}-\d{1,2}-\d{4}$/.test(line) || /^Totaal:/.test(line);
-      content += `${isHeading?'/F2 11 Tf':'/F1 10 Tf'}\n1 0 0 1 ${marginX} ${y} Tm\n(${pdfSafe(line)}) Tj\n`;
-      y-=lineH;
-    });
-    content+='ET';
-    const contentObj=addObj(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
-    contentObjs.push(contentObj);
-    const pageObj=addObj(''); // filled later
-    pageObjs.push(pageObj);
-  });
-
-  const pagesObj=addObj('');
-  const catalogObj=addObj(`<< /Type /Catalog /Pages ${pagesObj} 0 R >>`);
-
-  pageObjs.forEach((objNum,i)=>{
-    objects[objNum-1]=`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 ${fontObj} 0 R /F2 ${boldFontObj} 0 R >> >> /Contents ${contentObjs[i]} 0 R >>`;
-  });
-
-  objects[pagesObj-1]=`<< /Type /Pages /Kids [${pageObjs.map(n=>n+' 0 R').join(' ')}] /Count ${pageObjs.length} >>`;
-
-  let pdf='%PDF-1.4\n';
-  const offsets=[0];
-  objects.forEach((obj,i)=>{
-    offsets.push(pdf.length);
-    pdf += `${i+1} 0 obj\n${obj}\nendobj\n`;
-  });
-  const xrefPos=pdf.length;
-  pdf += `xref\n0 ${objects.length+1}\n`;
-  pdf += '0000000000 65535 f \n';
-  for(let i=1;i<offsets.length;i++){
-    pdf += String(offsets[i]).padStart(10,'0')+' 00000 n \n';
-  }
-  pdf += `trailer\n<< /Size ${objects.length+1} /Root ${catalogObj} 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
-
-  const bytes=new Uint8Array(pdf.length);
-  for(let i=0;i<pdf.length;i++) bytes[i]=pdf.charCodeAt(i)&255;
-
-  const filename=`lindeman_projecturen_alle_registraties_${todayKey()}.pdf`;
-
-  // In de Android APK slaan we de PDF rechtstreeks in Downloads op.
-  // Daardoor is geen lokale webserver of blob-download van de WebView nodig.
-  if(window.AndroidApp && typeof window.AndroidApp.savePdf === 'function'){
-    let binary='';
-    const chunk=0x8000;
-    for(let i=0;i<bytes.length;i+=chunk){
-      binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+chunk, bytes.length)));
-    }
-    window.AndroidApp.savePdf(btoa(binary), filename);
-  }else{
-    const blob=new Blob([bytes],{type:'application/pdf'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download=filename;
-    document.body.appendChild(a);
-    a.click();
-    const url=a.href;
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-  }
+  const w=window.open('','_blank');
+  if(!w){show('Het overzicht kon niet worden geopend.');return;}
+  const projectCards=logs.slice().sort((a,b)=>b.start-a.start).map(x=>`
+  <div class="reg">
+    <div class="date">${fmtDate(x.start)}</div>
+    <div class="line"><span>Project</span><b>${esc(x.project)}</b></div>
+    <div class="line"><span>Positie</span><b>${esc(x.position||'-')}</b></div>
+    <div class="line"><span>Werksoort</span><b>${esc(x.worktype)}</b></div>
+    <div class="line"><span>Tijd</span><b>${fmtTime(x.start)} – ${fmtTime(x.end)}</b></div>
+    <div class="line total"><span>Uren</span><b>${hours(netMs(x.start,x.end))}</b></div>
+  </div>`);
+  const dayCards=dayLogs.slice().sort((a,b)=>(b.created||0)-(a.created||0)).map(x=>`
+  <div class="reg">
+    <div class="date">${formatKey(x.date)}</div>
+    <div class="line"><span>Dagregistratie</span><b>${esc(x.type)}</b></div>
+    <div class="line"><span>Soort</span><b>${x.mode==='day'?'Hele dag':'Uren'}</b></div>
+    <div class="line"><span>Van – tot</span><b>${x.mode==='day'?'—':dayLogLabel(x)}</b></div>
+    <div class="line total"><span>Totaal</span><b>${x.mode==='day'?'1 dag':hours(dayLogHoursMs(x))+' uur'}</b></div>
+  </div>`);
+  const cards=[...projectCards,...dayCards].join('');
+  w.document.write(`<meta name="viewport" content="width=device-width,initial-scale=1"><style>
+  *{box-sizing:border-box}body{font-family:Arial,sans-serif;background:#f2f2f2;margin:0;padding:16px;font-size:19px;color:#3f3f3f}
+  h2{width:100%;max-width:105mm;margin:0 auto 16px;font-size:28px}
+  .reg{width:100%;max-width:105mm;margin:0 auto 14px;background:#fff;border:1px solid #d1d5db;border-radius:14px;padding:15px}
+  .date{font-size:22px;font-weight:800;border-bottom:1px solid #d9d9d9;padding-bottom:8px;margin-bottom:8px}
+  .line{display:flex;justify-content:space-between;gap:12px;padding:6px 0}.line span{color:#777777;font-weight:700}.line b{text-align:right}
+  .total{border-top:1px solid #d9d9d9;margin-top:6px;padding-top:10px}.total b{font-size:23px}
+  </style><h2>Alle registraties</h2>${cards||'<div class="reg">Geen registraties.</div>'}`);
+  w.document.close();
 });
 
-mailBtn.addEventListener('click',()=>{
+function weekExportData(){
   const r=isoWeekRange(selectedDate());
   const items=logs.filter(x=>x.start>=r.start&&x.start<=r.end).sort((a,b)=>a.start-b.start);
-  if(!items.length){show('Geen registraties in deze week.');return;}
-
-  const perDay={};
-  items.forEach(x=>{
-    const k=dateKey(x.start);
-    if(!perDay[k])perDay[k]={projects:{},total:0};
-
-    const pk=x.project+'|||'+(x.position||'');
-    const ms=netMs(x.start,x.end);
-
-    if(!perDay[k].projects[pk]){
-      perDay[k].projects[pk]={ms:0,worktypes:new Set()};
-    }
-    perDay[k].projects[pk].ms+=ms;
-    if(x.worktype)perDay[k].projects[pk].worktypes.add(x.worktype);
-    perDay[k].total+=ms;
-  });
-
-  const dayNames=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
-
-  const lines=Object.entries(perDay).map(([d,data])=>{
-    const [y,m,da]=d.split('-').map(Number);
-    const dayName=dayNames[new Date(y,m-1,da).getDay()];
-
-    const p=Object.entries(data.projects).map(([k,val])=>{
-      const [pr,pos]=k.split('|||');
-      const wt=[...val.worktypes].join(', ');
-      return `• Project: ${pr}\n  Positie: ${pos||'-'}\n  Werksoort: ${wt||'-'}\n  Uren: ${hours(val.ms)} uur`;
-    }).join('\n\n');
-
-    return `${dayName.toUpperCase()} ${formatKey(d)}\n${'='.repeat(28)}\n${p}\n\nDagtotaal: ${hours(data.total)} uur`;
-  }).join('\n\n\n');
-
-  const total=items.reduce((s,x)=>s+netMs(x.start,x.end),0);
-  const name=employee.value.trim()||items[0].employee||'medewerker';
-
-  const body=
-`Hallo,
-
-PROJECTURENOVERZICHT
-============================
-Medewerker: ${name}
-Week: ${weekLabel(selectedDate())}
-
-${lines}
-
-============================
-WEEKTOTAAL: ${hours(total)} uur`;
-
-  const subject=`Projecturen ${name} | ${weekLabel(selectedDate())}`;
-
-  location.href='mailto:gvoetel@lindemanpaneelbouw.nl?subject='+
-    encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
-});
-
-
-// Installatie als app op het Android-startscherm
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (installBtn) installBtn.style.display = 'block';
-});
-if (installBtn) {
-  installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) {
-      alert('Kies in het browsermenu: Toevoegen aan startscherm / App installeren. De pagina moet via https geopend zijn.');
-      return;
-    }
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    installBtn.style.display = 'none';
-  });
+  const weekDayLogs=dayLogs.filter(x=>{const t=makeDateTime(x.date,'12:00');return t>=r.start&&t<=r.end;}).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!items.length&&!weekDayLogs.length) return null;
+  const days=balancedRange(items).sort((a,b)=>a.date.localeCompare(b.date));
+  const total=days.reduce((sum,d)=>sum+d.total,0)+weekDayLogs.reduce((sum,x)=>sum+dayLogHoursMs(x),0);
+  const emp=employee.value.trim()||(items[0]&&items[0].employee)||(weekDayLogs[0]&&weekDayLogs[0].employee)||'-';
+  return {items,weekDayLogs,days,total,emp};
 }
-window.addEventListener('appinstalled', () => {
-  if (installBtn) installBtn.style.display = 'none';
-});
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
+
+function resizeSignaturePad(){
+  const ratio=Math.max(1,window.devicePixelRatio||1);
+  const rect=signaturePad.getBoundingClientRect();
+  const img=signaturePad.width&&signaturePad.height?signaturePad.toDataURL():null;
+  signaturePad.width=Math.max(1,Math.floor(rect.width*ratio));
+  signaturePad.height=Math.max(1,Math.floor(180*ratio));
+  const ctx=signaturePad.getContext('2d');
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  ctx.lineWidth=2.4;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#111';
+  if(img){const im=new Image();im.onload=()=>ctx.drawImage(im,0,0,rect.width,180);im.src=img;}
 }
+let sigDrawing=false, sigHasInk=false;
+function sigPoint(e){
+  const r=signaturePad.getBoundingClientRect(); const t=e.touches?e.touches[0]:e;
+  return {x:t.clientX-r.left,y:t.clientY-r.top};
+}
+function sigStart(e){e.preventDefault();sigDrawing=true;const p=sigPoint(e);const c=signaturePad.getContext('2d');c.beginPath();c.moveTo(p.x,p.y);}
+function sigMove(e){if(!sigDrawing)return;e.preventDefault();const p=sigPoint(e);const c=signaturePad.getContext('2d');c.lineTo(p.x,p.y);c.stroke();sigHasInk=true;}
+function sigEnd(){sigDrawing=false;}
+['pointerdown'].forEach(ev=>signaturePad.addEventListener(ev,sigStart));
+['pointermove'].forEach(ev=>signaturePad.addEventListener(ev,sigMove));
+['pointerup','pointercancel','pointerleave'].forEach(ev=>signaturePad.addEventListener(ev,sigEnd));
+
+function openSignature(){
+  const data=weekExportData();
+  if(!data){show('Geen registraties in deze week.');return;}
+  signatureOverlay.setAttribute('aria-hidden','false');
+  setTimeout(()=>{resizeSignaturePad();signatureOverlay.scrollIntoView({behavior:'smooth',block:'center'});},20);
+}
+function closeSignature(){signatureOverlay.setAttribute('aria-hidden','false');}
+function clearSignature(){const c=signaturePad.getContext('2d');c.clearRect(0,0,signaturePad.width,signaturePad.height);sigHasInk=false;}
+
+mailBtn.addEventListener('click',openSignature);
+clearSignatureBtn.addEventListener('click',clearSignature);
+cancelSignatureBtn.addEventListener('click',closeSignature);
+
+
+confirmSignatureBtn.addEventListener('click',()=>{
+  if(!sigHasInk){show('Zet eerst je handtekening.');return;}
+  const data=weekExportData(); if(!data){closeSignature();show('Geen registraties in deze week.');return;}
+  const {days,weekDayLogs,total,emp}=data;
+  const sig=signaturePad.toDataURL('image/png');
+  const rows=[];
+  days.forEach(day=>{
+    Object.entries(day.projects).forEach(([k,ms],i)=>{
+      const pos=(day.projectPositions&&day.projectPositions[k])||'';
+      rows.push(`<tr><td>${i===0?formatKey(day.date):''}</td><td>${esc(k)}</td><td>${esc(pos||'-')}</td><td style="text-align:right">${hours(ms)}</td></tr>`);
+    });
+    rows.push(`<tr class="daytotal"><td colspan="3">Dagtotaal ${formatKey(day.date)}</td><td style="text-align:right">${hours(day.total)}</td></tr>`);
+  });
+  weekDayLogs.forEach(x=>rows.push(`<tr><td>${formatKey(x.date)}</td><td colspan="2">${esc(x.type)} — ${x.mode==='day'?'Hele dag':dayLogLabel(x)}</td><td style="text-align:right">${x.mode==='day'?'1 dag':hours(dayLogHoursMs(x))}</td></tr>`));
+  const html=`<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Projecturen ${weekLabel(selectedDate())}</title><style>body{font-family:Arial,sans-serif;color:#333;margin:28px}h1{margin:0 0 4px}.muted{color:#777}.head{border-bottom:3px solid #d71920;padding-bottom:12px;margin-bottom:18px}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border-bottom:1px solid #ddd;padding:9px 6px;text-align:left}th{background:#f5f5f5}.daytotal td{font-weight:700;border-top:2px solid #bbb}.grand{font-size:20px;font-weight:800;margin-top:18px}.sig{margin-top:34px;width:260px}.sig img{width:240px;height:110px;object-fit:contain;border-bottom:1px solid #555}.siglabel{font-size:13px;color:#666;margin-top:4px}@media print{body{margin:12mm}}</style></head><body><div class="head"><h1>LINDEMAN <span style="color:#d71920">PANEELBOUW</span></h1><div>Weekoverzicht projecturen</div><div class="muted">${weekLabel(selectedDate())} • Medewerker: ${esc(emp)}</div></div><table><thead><tr><th>Datum</th><th>Project / registratie</th><th>Positie</th><th style="text-align:right">Uren</th></tr></thead><tbody>${rows.join('')}</tbody></table><div class="grand">Weektotaal: ${hours(total)} uur</div><div class="sig"><img src="${sig}" alt="Handtekening"><div class="siglabel">Handtekening medewerker — ${esc(emp)}</div></div></body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Projecturen_${selectedDate()}_week.html`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  const lines=days.map(day=>`${formatKey(day.date)} — ${hours(day.total)} uur`).join('\n');
+  const specialLines=weekDayLogs.map(x=>`${formatKey(x.date)} - ${x.type}: ${x.mode==='day'?'hele dag':dayLogLabel(x)+' = '+hours(dayLogHoursMs(x))+' uur'}`).join('\n');
+  const body=`Hallo,\n\nHierbij het ondertekende weekoverzicht van ${emp} over ${weekLabel(selectedDate())}.\n\n${lines}${specialLines?'\n\nDagregistraties:\n'+specialLines:''}\n\nWeektotaal uren: ${hours(total)} uur\n\nHet ondertekende weekbestand is zojuist gedownload. Voeg dit bestand als bijlage toe aan de e-mail.`;
+  closeSignature();
+  setTimeout(()=>{location.href='mailto:gvoetel@lindemanpaneelbouw.nl?subject='+encodeURIComponent('Projecturen '+weekLabel(selectedDate()))+'&body='+encodeURIComponent(body);},350);
+});
 
 employee.value=localStorage.getItem('employeeName')||'';
 project.value=localStorage.getItem('draftProject')||'';
 position.value=localStorage.getItem('draftPosition')||'';
 description.value=localStorage.getItem('draftDescription')||'';
 if(localStorage.getItem('draftWorktype'))worktype.value=localStorage.getItem('draftWorktype');
+manualTimeFields.style.display=dayMode.value==='hours'?'block':'none';
 const savedWorkDate=localStorage.getItem('selectedWorkDate');
 const lastOpenDate=localStorage.getItem('lastOpenDate');
 const currentToday=todayKey();
