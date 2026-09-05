@@ -73,12 +73,8 @@ canvas{width:100%;height:auto;display:block}
 <div class="wrap">
   <div style="text-align:center;margin-bottom:8px">
     <div style="font-size:22px;font-weight:900;letter-spacing:.3px;color:#4a4a4a">LINDEMAN <span style="color:#d71920">PANEELBOUW</span></div>
-    <div style="font-size:14px;font-weight:700;color:#777">Projecturen</div>
-  </div>
-  <h1>Projecturen</h1>
-  <div class="sub">Handmatig projecturen registreren</div>
-  <div id="appVersion" class="small" style="text-align:center;margin-top:6px;font-weight:900;color:#d71920">VERSIE 10 • toetsenbordfix + projecttelling</div>
-  <div style="margin-top:10px">
+</div>
+<div style="margin-top:10px">
     <button id="installBtn" class="primary" type="button" style="display:none">⬇ Installeer app</button>
   </div>
 
@@ -469,7 +465,7 @@ function render(){
       .sort((a,b)=>a.start-b.start);
 
     const sessionLines=sessions.map((p,i)=>{
-      return `<div style="white-space:nowrap;margin-bottom:3px"><strong>Rit ${i+1}:</strong> ${fmtTime(p.start)}–${fmtTime(p.end)} <span class="small muted">(${hours(netMs(p.start,p.end))} u)</span></div>`;
+      return `<div style="white-space:nowrap;margin-bottom:3px"><strong>Rit ${i+1}:</strong> ${fmtTime(p.start)}–${fmtTime(p.end)}</div>`;
     }).join('');
 
     return `<tr>
@@ -481,7 +477,7 @@ function render(){
       <td>${esc(Array.from(x.worktypes).join(', ')||'-')}</td>
       <td>
         ${sessionLines || `<div>${fmtTime(x.firstStart)}–${fmtTime(x.lastEnd)}</div>`}
-        ${sessions.length>1?'<div class="small muted" style="margin-top:4px">Tijden samengevoegd</div>':''}
+        ${sessions.length>1?'<div class="small muted" style="margin-top:4px">Totaal staat rechts bij Uren</div>':''}
       </td>
       <td><strong>${hours(x.totalMs)}</strong></td>
     </tr>`;
