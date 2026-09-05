@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lindeman Paneelbouw Projecturen</title>
+<style>
+:root{
+  --bg:#f2f2f2;
+  --card:#ffffff;
+  --text:#2f2f2f;
+  --muted:#777777;
+  --border:#cfcfcf;
+  --ok:#d71920;
+  --danger:#8f1116;
+  --dark:#4a4a4a
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:16px}
+.wrap{max-width:680px;margin:auto;padding:14px 12px 80px}
+h1{font-size:27px;margin:6px 0 3px}
+.sub{color:var(--muted);font-size:15px}
+.card{background:var(--card);border:1px solid #d9d9d9;border-radius:18px;padding:16px;margin-top:14px}
+.title{font-size:20px;font-weight:850;color:#4a4a4a}
+label{display:block;font-size:15px;font-weight:800;margin:13px 0 6px}
+input,select{width:100%;min-height:50px;padding:12px;font-size:18px;border:1px solid var(--border);border-radius:12px;background:#fff}
+button{width:100%;min-height:50px;padding:12px 14px;border:0;border-radius:12px;font-size:17px;font-weight:850;cursor:pointer}
+button:disabled{opacity:.45}
+.ok{background:#d71920;color:#fff}.danger{background:#8f1116;color:#fff}.primary{background:#d71920;color:#fff}.secondary{background:#d9d9d9;color:#3f3f3f}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.status{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pill{font-size:13px;font-weight:800;padding:6px 10px;border-radius:999px;background:#d9d9d9}
+.pill.run{background:#fde8e9;color:#9f1117}
+.muted{color:var(--muted)}.small{font-size:13px}
+.timer{font-size:40px;font-weight:900;margin:10px 0}
+.notice{display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:14px}
+.tableWrap{overflow:auto;max-width:105mm;margin:10px auto 0}
+table{width:100%;max-width:105mm;margin:auto;border-collapse:collapse;font-size:15px}
+th,td{padding:10px 6px;border-bottom:1px solid #d9d9d9;text-align:left;vertical-align:top}
+th{font-size:13px;color:var(--muted)}
+.chartBox{margin-top:12px;padding:8px;border:1px solid #d9d9d9;border-radius:12px}
+canvas{width:100%;height:auto;display:block}
+.footer{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid #ddd;padding:8px 12px;font-size:13px;color:var(--muted)}
+.footer>div{max-width:680px;margin:auto}
+.install-hint{font-size:13px;color:#777777;margin-top:8px}
+@media(max-width:420px){.wrap{padding-left:10px;padding-right:10px}button{font-size:16px}}
+</style>
+
+<meta name="theme-color" content="#3f3f3f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+</head>
+<body>
+<div class="wrap">
+  <div style="text-align:center;margin:8px 0 14px">
+    <div style="font-size:22px;font-weight:900;letter-spacing:.3px;color:#4a4a4a">LINDEMAN <span style="color:#d71920">PANEELBOUW</span></div>
+    <div style="font-size:14px;font-weight:700;color:#777">Projecturen</div>
+  </div>
+  <h1>Projecturen</h1>
+  <div class="sub">Handmatig projecturen registreren</div>
+  <div style="margin-top:10px">
+    <button id="installBtn" class="primary" type="button" style="display:none">⬇ Installeer app</button>
+  </div>
+
+  <section class="card">
+    <div class="status">
+      <span class="title">Medewerker</span>
+      <span id="statusPill" class="pill">Niet actief</span>
+    </div>
+
+    <label for="employee">Naam medewerker</label>
+    <input id="employee" placeholder="Bijv. Jan">
+
+    <label for="worktype">Werksoort</label>
+    <select id="worktype">
+      <option>Paneelbouw</option>
+      <option>Testen</option>
+      <option>Overig</option>
+    </select>
+
+    <label for="workDate">Werkdatum</label>
+    <div class="grid2">
+      <input id="workDate" type="date">
+      <button id="todayBtn" type="button" class="secondary">Vandaag</button>
+    </div>
+    <div class="small muted" style="margin-top:6px">Vandaag wordt automatisch gekozen. Je kunt altijd handmatig een andere datum selecteren.</div>
+  </section>
+
+  <section class="card">
+    <div class="title">1. Project invullen</div>
+
+    <label for="project">Projectnummer</label>
+    <input id="project" placeholder="Bijv. LP200300">
+
+    <label for="position">Positie</label>
+    <input id="position" placeholder="Bijv. A01">
+
+    <label for="description">Omschrijving (optioneel)</label>
+    <input id="description" placeholder="Bijv. kastdeel of opmerking">
+
+    <div id="notice" class="notice"></div>
+  </section>
+
+  <section class="card">
+    <div class="title">2. Werk registreren</div>
+
+    <div id="timerArea" style="display:none;margin-top:10px">
+      <div class="muted">Netto werktijd</div>
+      <div id="elapsed" class="timer">00:00:00</div>
+      <div id="runningInfo" class="small muted"></div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px">
+      <button id="startBtn" class="ok" type="button">▶ Start project</button>
+      <button id="stopBtn" class="danger" type="button" disabled>■ Stop</button>
+    </div>
+    <div style="margin-top:9px">
+      <button id="endDayBtn" class="secondary" type="button">✓ Einde werkdag</button>
+    </div>
+    <div class="small muted" style="margin-top:9px">
+      Pauzes automatisch eraf: 09:15–09:30, 12:30–13:00 en 14:30–14:45.
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="status">
+      <span class="title">Uren van vandaag</span>
+      <button id="mailBtn" class="primary" type="button" style="width:auto;min-height:44px;padding:9px 12px;font-size:14px">✉ Mail week</button>
+    </div>
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>Project</th><th>Werk</th><th>Tijd</th><th>Uren</th></tr></thead>
+        <tbody id="todayBody"></tbody>
+      </table>
+    </div>
+    <div class="grid2" style="margin-top:10px">
+      <button id="allBtn" class="secondary" type="button">⬇ Download alle registraties als PDF</button>
+      <button id="clearBtn" class="secondary" type="button">Wis gegevens</button>
+    </div>
+    <div style="margin-top:9px">
+      <button id="restoreBtn" class="secondary" type="button">↩ Herstel laatst gewiste gegevens</button>
+    </div>
+    <div class="small muted" style="margin-top:8px">Alles wordt automatisch opgeslagen op dit apparaat.</div>
+  </section>
+
+  <section class="card">
+    <div class="status">
+      <span class="title">Productiviteit</span>
+      <button id="modeBtn" class="primary" type="button" style="width:auto;min-height:44px;padding:9px 12px;font-size:14px">Week overzicht →</button>
+    </div>
+    <div id="modeText" class="small muted" style="margin-top:6px"></div>
+
+    <div style="margin-top:10px">
+      <button id="graphBtn" class="secondary" type="button">📊 Grafiek zien</button>
+    </div>
+
+    <div id="graphWrap" class="chartBox" style="display:none">
+      <div id="graphLegend" style="display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px"></div>
+      <canvas id="chart" width="640" height="300"></canvas>
+    </div>
+  </section>
+</div>
+
+<div class="footer"><div>Gegevens worden alleen lokaal op dit apparaat opgeslagen.</div></div>
+
+<script>
+(() => {
+'use strict';
+
+const $ = id => document.getElementById(id);
+const employee=$('employee'), worktype=$('worktype'), workDate=$('workDate'), todayBtn=$('todayBtn');
+const project=$('project'), position=$('position'), description=$('description');
+const startBtn=$('startBtn'), stopBtn=$('stopBtn'), endDayBtn=$('endDayBtn');
+const statusPill=$('statusPill'), timerArea=$('timerArea'), elapsed=$('elapsed'), runningInfo=$('runningInfo');
+const todayBody=$('todayBody'), notice=$('notice'), allBtn=$('allBtn'), clearBtn=$('clearBtn'), restoreBtn=$('restoreBtn'), mailBtn=$('mailBtn');
+const modeBtn=$('modeBtn'), modeText=$('modeText'), graphBtn=$('graphBtn'), graphWrap=$('graphWrap'), graphLegend=$('graphLegend'), chart=$('chart'), installBtn=$('installBtn');
+
+let logs = safeParse('projectLogs', []);
+let active = safeParse('activeProject', null);
+let overviewMode = localStorage.getItem('overviewMode') === 'week' ? 'week' : 'day';
+let clearedDayKey = localStorage.getItem('clearedDayKey') || '';
+let showGraph = localStorage.getItem('showGraph') === '1';
+let timer=null;
+
+function safeParse(key,fallback){
+  try{ const v=JSON.parse(localStorage.getItem(key)); return v ?? fallback; }catch(e){ return fallback; }
+}
+function dateKey(ts){
+  const d=new Date(ts), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), da=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+function todayKey(){ return dateKey(Date.now()); }
+function formatKey(k){ if(!k)return''; const [y,m,d]=k.split('-'); return `${d}-${m}-${y}`; }
+function fmtTime(ts){ return new Date(ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}); }
+function fmtDate(ts){ return new Date(ts).toLocaleDateString('nl-NL'); }
+function esc(s=''){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
+function hours(ms){ return (ms/3600000).toFixed(2).replace('.',','); }
+function duration(ms){
+  let s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600); s%=3600; const m=Math.floor(s/60); s%=60;
+  return [h,m,s].map(v=>String(v).padStart(2,'0')).join(':');
+}
+function netMs(start,end){
+  if(!start||!end||end<=start)return 0;
+  let total=end-start;
+  const pauses=[[9,15,9,30],[12,30,13,0],[14,30,14,45]];
+  let day=new Date(new Date(start).getFullYear(),new Date(start).getMonth(),new Date(start).getDate());
+  const last=new Date(new Date(end).getFullYear(),new Date(end).getMonth(),new Date(end).getDate());
+  while(day<=last){
+    pauses.forEach(([sh,sm,eh,em])=>{
+      const ps=new Date(day.getFullYear(),day.getMonth(),day.getDate(),sh,sm).getTime();
+      const pe=new Date(day.getFullYear(),day.getMonth(),day.getDate(),eh,em).getTime();
+      total-=Math.max(0,Math.min(end,pe)-Math.max(start,ps));
+    });
+    day.setDate(day.getDate()+1);
+  }
+  return Math.max(0,total);
+}
+function show(msg){ notice.textContent=msg; notice.style.display='block'; }
+function hide(){ notice.style.display='none'; }
+
+function save(){
+  localStorage.setItem('projectLogs',JSON.stringify(logs));
+  localStorage.setItem('activeProject',JSON.stringify(active));
+  localStorage.setItem('employeeName',employee.value.trim());
+  localStorage.setItem('draftProject',project.value);
+  localStorage.setItem('draftPosition',position.value);
+  localStorage.setItem('draftDescription',description.value);
+  localStorage.setItem('draftWorktype',worktype.value);
+  localStorage.setItem('selectedWorkDate',workDate.value);
+}
+
+function selectedDate(){ return workDate.value || todayKey(); }
+
+function isoWeekRange(key){
+  const [y,m,d]=key.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  const day=dt.getDay()||7;
+  const mon=new Date(y,m-1,d-(day-1)); mon.setHours(0,0,0,0);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+  return {start:mon.getTime(),end:sun.getTime()};
+}
+function weekLabel(key){
+  const r=isoWeekRange(key);
+  return `${new Date(r.start).toLocaleDateString('nl-NL')} t/m ${new Date(r.end).toLocaleDateString('nl-NL')}`;
+}
+function colorForKey(key){
+  let hash=0;
+  for(let i=0;i<key.length;i++){ hash=((hash<<5)-hash)+key.charCodeAt(i); hash|=0; }
+  const hue=Math.abs(hash)%360;
+  const sat=65 + (Math.abs(hash)%15);
+  const light=42 + (Math.abs(hash)%10);
+  return `hsl(${hue} ${sat}% ${light}%)`;
+}
+
+function overviewLogs(){
+  if(overviewMode==='day'){
+    const k=selectedDate();
+    if(clearedDayKey===k)return [];
+    return logs.filter(x=>dateKey(x.start)===k);
+  }
+  const r=isoWeekRange(selectedDate());
+  return logs.filter(x=>x.start>=r.start&&x.start<=r.end);
+}
+
+function render(){
+  if(active){
+    startBtn.disabled=true; stopBtn.disabled=false; timerArea.style.display='block';
+    project.disabled=true; position.disabled=true; worktype.disabled=true; description.disabled=true; workDate.disabled=true;
+    statusPill.textContent='Actief'; statusPill.className='pill run';
+    runningInfo.textContent=`${active.employee} • ${active.project}${active.position?' • positie '+active.position:''} • ${active.worktype} • gestart ${fmtTime(active.start)}`;
+    elapsed.textContent=duration(netMs(active.start,Date.now()));
+    if(!timer)timer=setInterval(()=>elapsed.textContent=duration(netMs(active.start,Date.now())),1000);
+  }else{
+    startBtn.disabled=false; stopBtn.disabled=true; timerArea.style.display='none';
+    project.disabled=false; position.disabled=false; worktype.disabled=false; description.disabled=false; workDate.disabled=false;
+    statusPill.textContent='Niet actief'; statusPill.className='pill';
+    if(timer){clearInterval(timer);timer=null;}
+  }
+
+  const tk=todayKey();
+  const todays=clearedDayKey===tk?[]:logs.filter(x=>dateKey(x.start)===tk).sort((a,b)=>b.start-a.start);
+  todayBody.innerHTML=todays.length?todays.map(x=>`
+    <tr>
+      <td><strong>${esc(x.project)}</strong><div class="small muted">${x.position?'Positie: '+esc(x.position):''}</div></td>
+      <td>${esc(x.worktype)}</td>
+      <td>${fmtTime(x.start)}–${fmtTime(x.end)}</td>
+      <td>${hours(netMs(x.start,x.end))}</td>
+    </tr>`).join(''):'<tr><td colspan="4" class="muted">Nog geen uren geregistreerd.</td></tr>';
+
+  renderOverview();
+}
+
+function renderOverview(){
+  modeBtn.textContent=overviewMode==='day'?'Week overzicht →':'← Dag overzicht';
+  modeText.textContent=overviewMode==='day'?`Dagoverzicht • ${formatKey(selectedDate())}`:`Weekoverzicht • ${weekLabel(selectedDate())}`;
+  graphBtn.textContent = showGraph ? '📉 Grafiek verbergen' : '📊 Grafiek zien';
+  graphWrap.style.display = showGraph ? 'block' : 'none';
+
+  const items=overviewLogs(), map={};
+  items.forEach(x=>{
+    const k=`${x.project}|||${x.position||''}`;
+    if(!map[k])map[k]={key:k,project:x.project,position:x.position||'',days:[0,0,0,0,0,0,0],total:0};
+    let idx=new Date(x.start).getDay()-1;if(idx<0)idx=6;
+    const h=netMs(x.start,x.end)/3600000;
+    map[k].days[idx]+=h; map[k].total+=h;
+  });
+
+  const series=Object.values(map).sort((a,b)=>String(a.project).localeCompare(String(b.project))||String(a.position).localeCompare(String(b.position)));
+  const colors=series.map(s=>colorForKey(s.key));
+
+  if(showGraph){
+    graphLegend.innerHTML = series.length
+      ? series.map((s,i)=>`<div style="display:flex;align-items:center;gap:6px;background:#f6f6f6;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:13px">
+          <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${colors[i]}"></span>
+          <span><strong>${esc(s.project)}</strong>${s.position ? ' - ' + esc(s.position) : ''}</span>
+        </div>`).join('')
+      : '<div class="small muted">Nog geen projecten voor deze selectie.</div>';
+    drawChart(series,colors);
+  } else {
+    graphLegend.innerHTML = '';
+    const ctx=chart.getContext('2d');
+    ctx.clearRect(0,0,chart.width,chart.height);
+  }
+}
+
+function drawChart(series,colors){
+  const ctx=chart.getContext('2d'), ratio=window.devicePixelRatio||1, w=chart.clientWidth||640, h=300;
+  chart.width=Math.floor(w*ratio);chart.height=Math.floor(h*ratio);chart.style.height=h+'px';
+  ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,w,h);
+  const all=['Ma','Di','Wo','Do','Vr','Za','Zo'];
+  const [y,m,d]=selectedDate().split('-').map(Number);let dow=new Date(y,m-1,d).getDay()-1;if(dow<0)dow=6;
+  const indexes=overviewMode==='day'?[dow]:[0,1,2,3,4,5,6], labels=indexes.map(i=>all[i]);
+  const totals=indexes.map(i=>series.reduce((s,x)=>s+x.days[i],0)), max=Math.max(1,...totals);
+  const pl=38,pr=10,pt=20,pb=35,cw=w-pl-pr,ch=h-pt-pb,gap=10,bw=(cw-gap*(labels.length-1))/labels.length;
+  ctx.font='12px system-ui';ctx.strokeStyle='#d9d9d9';ctx.fillStyle='#777777';
+  for(let i=0;i<=4;i++){const val=max*i/4,yc=pt+ch-ch*i/4;ctx.beginPath();ctx.moveTo(pl,yc);ctx.lineTo(pl+cw,yc);ctx.stroke();ctx.fillText(val.toFixed(1).replace('.',','),2,yc+4);}
+  labels.forEach((lab,di)=>{
+    const idx=indexes[di],x=pl+di*(bw+gap);let used=0;
+    series.forEach((s,si)=>{const v=s.days[idx];if(v<=0)return;const bh=v/max*ch,yy=pt+ch-used-bh;ctx.fillStyle=colors[si%colors.length];ctx.fillRect(x,yy,bw,bh);used+=bh;});
+    ctx.fillStyle='#3f3f3f';ctx.textAlign='center';ctx.fillText(lab,x+bw/2,h-10);
+    if(totals[di]>0){const yy=pt+ch-totals[di]/max*ch;ctx.fillText(totals[di].toFixed(2).replace('.',','),x+bw/2,Math.max(pt+10,yy-6));}
+  });
+  ctx.textAlign='left';
+}
+
+function stopActive(){
+  if(!active)return;
+  logs.push({...active,end:Date.now()});
+  active=null;
+  save();
+}
+
+startBtn.addEventListener('click',()=>{
+  hide();
+  const name=employee.value.trim(), proj=project.value.trim();
+  if(!name){show('Vul eerst de naam van de medewerker in.');employee.focus();return;}
+  if(!proj){show('Vul eerst een projectnummer in.');project.focus();return;}
+  if(!workDate.value){show('Kies eerst een werkdatum.');workDate.focus();return;}
+
+  if(clearedDayKey===selectedDate()){
+    clearedDayKey='';
+    localStorage.removeItem('clearedDayKey');
+  }
+
+  active={
+    employee:name,
+    project:proj,
+    position:position.value.trim(),
+    worktype:worktype.value,
+    description:description.value.trim(),
+    start:Date.now()
+  };
+  save();
+  render();
+});
+
+stopBtn.addEventListener('click',()=>{
+  if(!active)return;
+  stopActive();
+  project.value='';position.value='';description.value='';
+  save();render();project.focus();
+});
+
+endDayBtn.addEventListener('click',()=>{
+  hide();
+  if(active)stopActive();
+  project.value='';position.value='';description.value='';
+  clearedDayKey=selectedDate();
+  localStorage.setItem('clearedDayKey',clearedDayKey);
+  save();render();
+  show('Werkdag opgeslagen. Het dagoverzicht is leeggemaakt; de uren blijven in het weekoverzicht.');
+});
+
+modeBtn.addEventListener('click',()=>{
+  overviewMode=overviewMode==='day'?'week':'day';
+  localStorage.setItem('overviewMode',overviewMode);
+  renderOverview();
+});
+
+graphBtn.addEventListener('click',()=>{
+  showGraph = !showGraph;
+  localStorage.setItem('showGraph', showGraph ? '1' : '0');
+  renderOverview();
+});
+
+workDate.addEventListener('change',()=>{save();renderOverview();});
+
+todayBtn.addEventListener('click',()=>{
+  workDate.value=todayKey();
+  localStorage.setItem('selectedWorkDate', workDate.value);
+  render();
+});
+[employee,project,position,description].forEach(el=>el.addEventListener('input',save));
+worktype.addEventListener('change',save);
+
+clearBtn.addEventListener('click',()=>{
+  if(active){show('Stop eerst het actieve project.');return;}
+  if(confirm('Alle opgeslagen uren wissen?')){
+    localStorage.setItem('deletedProjectLogsBackup',JSON.stringify(logs));
+    logs=[];save();render();show('Gegevens gewist. Gebruik Herstel als dit per ongeluk was.');
+  }
+});
+restoreBtn.addEventListener('click',()=>{
+  const b=safeParse('deletedProjectLogsBackup',null);
+  if(!Array.isArray(b)||!b.length){show('Geen herstelkopie beschikbaar.');return;}
+  if(confirm('Laatst gewiste gegevens terugzetten?')){logs=b;save();render();show('Gegevens hersteld.');}
+});
+
+allBtn.addEventListener('click',()=>{
+  hide();
+  if(!logs.length){
+    show('Er zijn nog geen registraties om als PDF te downloaden.');
+    return;
+  }
+
+  function pdfSafe(s){
+    return String(s ?? '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\x20-\x7E]/g,' ')
+      .replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+  }
+
+  const sorted=logs.slice().sort((a,b)=>a.start-b.start);
+  const lines=[];
+  lines.push('LINDEMAN PANEELBOUW - ALLE PROJECTUREN');
+  lines.push('');
+  lines.push('Gegenereerd: '+new Date().toLocaleString('nl-NL'));
+  lines.push('');
+
+  let lastDate='';
+  let grandTotal=0;
+
+  sorted.forEach(x=>{
+    const d=fmtDate(x.start);
+    if(d!==lastDate){
+      if(lastDate) lines.push('');
+      lines.push(d);
+      lastDate=d;
+    }
+    const ms=netMs(x.start,x.end);
+    grandTotal+=ms;
+    lines.push(
+      'Project '+(x.project||'-')+
+      ' | Positie '+(x.position||'-')+
+      ' | '+(x.worktype||'-')+
+      ' | '+fmtTime(x.start)+'-'+fmtTime(x.end)+
+      ' | '+hours(ms)+' uur'
+    );
+    if(x.description) lines.push('  '+x.description);
+  });
+
+  lines.push('');
+  lines.push('Totaal: '+hours(grandTotal)+' uur');
+
+  const pageW=595, pageH=842, marginX=42, topY=800, lineH=16;
+  const maxLines=Math.floor((topY-55)/lineH);
+  const pages=[];
+  for(let i=0;i<lines.length;i+=maxLines) pages.push(lines.slice(i,i+maxLines));
+
+  const objects=[];
+  const addObj=body=>{ objects.push(body); return objects.length; };
+
+  const fontObj=addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+  const boldFontObj=addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+
+  const pageObjs=[];
+  const contentObjs=[];
+
+  pages.forEach((pageLines,pageIndex)=>{
+    let content='BT\n/F1 10 Tf\n';
+    let y=topY;
+    pageLines.forEach((line,idx)=>{
+      const isHeading = line==='LINDEMAN PANEELBOUW - ALLE PROJECTUREN' || /^\d{1,2}-\d{1,2}-\d{4}$/.test(line) || /^Totaal:/.test(line);
+      content += `${isHeading?'/F2 11 Tf':'/F1 10 Tf'}\n1 0 0 1 ${marginX} ${y} Tm\n(${pdfSafe(line)}) Tj\n`;
+      y-=lineH;
+    });
+    content+='ET';
+    const contentObj=addObj(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+    contentObjs.push(contentObj);
+    const pageObj=addObj(''); // filled later
+    pageObjs.push(pageObj);
+  });
+
+  const pagesObj=addObj('');
+  const catalogObj=addObj(`<< /Type /Catalog /Pages ${pagesObj} 0 R >>`);
+
+  pageObjs.forEach((objNum,i)=>{
+    objects[objNum-1]=`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 ${fontObj} 0 R /F2 ${boldFontObj} 0 R >> >> /Contents ${contentObjs[i]} 0 R >>`;
+  });
+
+  objects[pagesObj-1]=`<< /Type /Pages /Kids [${pageObjs.map(n=>n+' 0 R').join(' ')}] /Count ${pageObjs.length} >>`;
+
+  let pdf='%PDF-1.4\n';
+  const offsets=[0];
+  objects.forEach((obj,i)=>{
+    offsets.push(pdf.length);
+    pdf += `${i+1} 0 obj\n${obj}\nendobj\n`;
+  });
+  const xrefPos=pdf.length;
+  pdf += `xref\n0 ${objects.length+1}\n`;
+  pdf += '0000000000 65535 f \n';
+  for(let i=1;i<offsets.length;i++){
+    pdf += String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+  }
+  pdf += `trailer\n<< /Size ${objects.length+1} /Root ${catalogObj} 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
+
+  const bytes=new Uint8Array(pdf.length);
+  for(let i=0;i<pdf.length;i++) bytes[i]=pdf.charCodeAt(i)&255;
+
+  const filename=`lindeman_projecturen_alle_registraties_${todayKey()}.pdf`;
+
+  // In de Android APK slaan we de PDF rechtstreeks in Downloads op.
+  // Daardoor is geen lokale webserver of blob-download van de WebView nodig.
+  if(window.AndroidApp && typeof window.AndroidApp.savePdf === 'function'){
+    let binary='';
+    const chunk=0x8000;
+    for(let i=0;i<bytes.length;i+=chunk){
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+chunk, bytes.length)));
+    }
+    window.AndroidApp.savePdf(btoa(binary), filename);
+  }else{
+    const blob=new Blob([bytes],{type:'application/pdf'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    const url=a.href;
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+});
+
+mailBtn.addEventListener('click',()=>{
+  const r=isoWeekRange(selectedDate());
+  const items=logs.filter(x=>x.start>=r.start&&x.start<=r.end).sort((a,b)=>a.start-b.start);
+  if(!items.length){show('Geen registraties in deze week.');return;}
+
+  const perDay={};
+  items.forEach(x=>{
+    const k=dateKey(x.start);
+    if(!perDay[k])perDay[k]={projects:{},total:0};
+
+    const pk=x.project+'|||'+(x.position||'');
+    const ms=netMs(x.start,x.end);
+
+    if(!perDay[k].projects[pk]){
+      perDay[k].projects[pk]={ms:0,worktypes:new Set()};
+    }
+    perDay[k].projects[pk].ms+=ms;
+    if(x.worktype)perDay[k].projects[pk].worktypes.add(x.worktype);
+    perDay[k].total+=ms;
+  });
+
+  const dayNames=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+
+  const lines=Object.entries(perDay).map(([d,data])=>{
+    const [y,m,da]=d.split('-').map(Number);
+    const dayName=dayNames[new Date(y,m-1,da).getDay()];
+
+    const p=Object.entries(data.projects).map(([k,val])=>{
+      const [pr,pos]=k.split('|||');
+      const wt=[...val.worktypes].join(', ');
+      return `• Project: ${pr}\n  Positie: ${pos||'-'}\n  Werksoort: ${wt||'-'}\n  Uren: ${hours(val.ms)} uur`;
+    }).join('\n\n');
+
+    return `${dayName.toUpperCase()} ${formatKey(d)}\n${'='.repeat(28)}\n${p}\n\nDagtotaal: ${hours(data.total)} uur`;
+  }).join('\n\n\n');
+
+  const total=items.reduce((s,x)=>s+netMs(x.start,x.end),0);
+  const name=employee.value.trim()||items[0].employee||'medewerker';
+
+  const body=
+`Hallo,
+
+PROJECTURENOVERZICHT
+============================
+Medewerker: ${name}
+Week: ${weekLabel(selectedDate())}
+
+${lines}
+
+============================
+WEEKTOTAAL: ${hours(total)} uur`;
+
+  const subject=`Projecturen ${name} | ${weekLabel(selectedDate())}`;
+
+  location.href='mailto:gvoetel@lindemanpaneelbouw.nl?subject='+
+    encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+});
+
+
+// Installatie als app op het Android-startscherm
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installBtn) installBtn.style.display = 'block';
+});
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) {
+      alert('Kies in het browsermenu: Toevoegen aan startscherm / App installeren. De pagina moet via https geopend zijn.');
+      return;
+    }
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+}
+window.addEventListener('appinstalled', () => {
+  if (installBtn) installBtn.style.display = 'none';
+});
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+employee.value=localStorage.getItem('employeeName')||'';
+project.value=localStorage.getItem('draftProject')||'';
+position.value=localStorage.getItem('draftPosition')||'';
+description.value=localStorage.getItem('draftDescription')||'';
+if(localStorage.getItem('draftWorktype'))worktype.value=localStorage.getItem('draftWorktype');
+const savedWorkDate=localStorage.getItem('selectedWorkDate');
+const lastOpenDate=localStorage.getItem('lastOpenDate');
+const currentToday=todayKey();
+
+if(!savedWorkDate || lastOpenDate!==currentToday){
+  workDate.value=currentToday;
+  localStorage.setItem('selectedWorkDate', currentToday);
+}else{
+  workDate.value=savedWorkDate;
+}
+localStorage.setItem('lastOpenDate', currentToday);
+
+setInterval(()=>{if(active)save();},30000);
+window.addEventListener('resize',renderOverview);
+render();
+
+})();
+</script>
+</body>
+</html>

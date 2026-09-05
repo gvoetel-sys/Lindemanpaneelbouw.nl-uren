@@ -1,0 +1,16 @@
+LINDEMAN PROJECTUREN - HTML / STARTSCHERM
+
+Dit is geen APK en AIDE is niet nodig.
+
+Bestanden die bij elkaar moeten blijven:
+- index.html
+- manifest.webmanifest
+- sw.js
+- icon-192.png
+- icon-512.png
+
+Om hem echt als app op het Android-startscherm te installeren moet de map via een HTTPS-webadres worden geopend.
+Daarna in Chrome/Samsung Internet: menu > Toevoegen aan startscherm / App installeren.
+Na de eerste installatie werkt de app ook offline.
+
+Alle registraties worden lokaal op het toestel in de browser opgeslagen.
