@@ -34,8 +34,7 @@ button:disabled{opacity:.45}
 .tableWrap{overflow:auto;max-width:105mm;margin:10px auto 0}
 table{width:100%;max-width:105mm;margin:auto;border-collapse:collapse;font-size:15px}
 th,td{padding:10px 6px;border-bottom:1px solid #d9d9d9;text-align:left;vertical-align:top}
-#todayBody td:nth-child(3){min-width:118px}
-#todayBody td:last-child{white-space:nowrap}
+
 th{font-size:13px;color:var(--muted)}
 .chartBox{margin-top:12px;padding:8px;border:1px solid #d9d9d9;border-radius:12px}
 canvas{width:100%;height:auto;display:block}
@@ -128,7 +127,7 @@ canvas{width:100%;height:auto;display:block}
       <button id="endDayBtn" class="secondary" type="button">✓ Einde werkdag</button>
     </div>
     <div class="small muted" style="margin-top:9px">Pauzes automatisch eraf: 09:15–09:30, 12:30–13:00 en 14:30–14:45.</div>
-    <div class="small muted" style="margin-top:9px">Start je op dezelfde dag opnieuw met hetzelfde projectnummer, dan worden de tijden automatisch bij elkaar opgeteld.</div>
+    <div class="small muted" style="margin-top:9px">Start je op dezelfde dag opnieuw met hetzelfde projectnummer, dan worden alle ritten eerst bij elkaar opgeteld. Daarna wordt het projecttotaal één keer naar boven afgerond op 15 minuten.</div>
   </section>
 
   <section class="card">
@@ -208,7 +207,7 @@ canvas{width:100%;height:auto;display:block}
 
     <div class="tableWrap">
       <table>
-        <thead><tr><th>Project</th><th>Werk</th><th>Tijd</th><th>Uren</th></tr></thead>
+        <thead><tr><th colspan="3">Registraties</th><th style="text-align:right">Uren</th></tr></thead>
         <tbody id="todayBody"></tbody>
       </table>
     </div>
@@ -228,6 +227,13 @@ canvas{width:100%;height:auto;display:block}
     </div>
     <div id="modeText" class="small muted" style="margin-top:6px"></div>
     <div class="small muted" style="margin-top:4px">Elk project wordt per dag naar boven afgerond op 15 minuten.</div>
+    <div class="small" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px 12px">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f59e0b;margin-right:4px"></span>Ziekte</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2563eb;margin-right:4px"></span>Verlof</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#7c3aed;margin-right:4px"></span>ADV</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#16a34a;margin-right:4px"></span>Feestdag</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#6b7280;margin-right:4px"></span>Algemeen</span>
+    </div>
     <div class="tableWrap">
       <table>
         <thead><tr><th>Kleur</th><th>Project</th><th>Positie</th><th style="text-align:right">Uren</th></tr></thead>
@@ -421,6 +427,18 @@ function selectedDayLogs(){
 function dayLogHoursMs(x){if(x.mode!=='hours')return 0;return roundQuarterMs(Math.max(0,x.end-x.start))}
 function dayLogLabel(x){if(x.mode==='day')return'Hele dag';return `${fmtTime(x.start)}–${fmtTime(x.end)}`}
 
+function dayTypeColor(type){
+  const colors={
+    'Ziekte':'#f59e0b',
+    'Verlof':'#2563eb',
+    'Bijzonder verlof ADV':'#7c3aed',
+    'Nationale feestdag':'#16a34a',
+    'Algemeen':'#6b7280'
+  };
+  return colors[type]||'#6b7280';
+}
+
+
 function combinedProjectRowsForDay(items){
   const map={};
   items.forEach(x=>{
@@ -465,25 +483,33 @@ function render(){
       .sort((a,b)=>a.start-b.start);
 
     const sessionLines=sessions.map((p,i)=>{
-      return `<div style="white-space:nowrap;margin-bottom:3px"><strong>Rit ${i+1}:</strong> ${fmtTime(p.start)}–${fmtTime(p.end)}</div>`;
+      return `<div style="white-space:nowrap;margin-bottom:4px"><strong>Rit ${i+1}:</strong> ${fmtTime(p.start)}–${fmtTime(p.end)}</div>`;
     }).join('');
 
     return `<tr>
-      <td>
-        <strong>${esc(x.project)}</strong>
-        <div class="small muted">${x.positions.size?'Positie: '+esc(Array.from(x.positions).join(', ')):''}</div>
-        ${sessions.length>1?`<div style="display:inline-block;margin-top:6px;padding:5px 9px;border-radius:999px;background:#d71920;color:#fff;font-size:13px;font-weight:900">${sessions.length} REGISTRATIES</div>`:''}
+      <td colspan="4" style="padding:12px 6px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div style="min-width:0;flex:1">
+            <div style="font-size:17px;font-weight:900">${esc(x.project)}</div>
+            ${x.positions.size?`<div class="small muted">Positie: ${esc(Array.from(x.positions).join(', '))}</div>`:''}
+            <div class="small muted">${esc(Array.from(x.worktypes).join(', ')||'-')}</div>
+            ${sessions.length>1?`<div class="small" style="font-weight:900;color:#9f1117;margin-top:4px">${sessions.length} registraties</div>`:''}
+            <div style="margin-top:8px">${sessionLines}</div>
+          </div>
+          <div style="text-align:right;white-space:nowrap">
+            <div class="small muted">Totaal uren</div>
+            <div style="font-size:22px;font-weight:900">${hours(x.totalMs)}</div>
+          </div>
+        </div>
       </td>
-      <td>${esc(Array.from(x.worktypes).join(', ')||'-')}</td>
-      <td>
-        ${sessionLines || `<div>${fmtTime(x.firstStart)}–${fmtTime(x.lastEnd)}</div>`}
-        ${sessions.length>1?'<div class="small muted" style="margin-top:4px">Totaal staat rechts bij Uren</div>':''}
-      </td>
-      <td><strong>${hours(x.totalMs)}</strong></td>
     </tr>`;
   }).join('');
   const specialRows=daySpecial.map(x=>`<tr>
-    <td><strong>${esc(x.type)}</strong><div class="small muted">Dagregistratie</div></td>
+    <td>
+      <span style="display:inline-block;width:16px;height:16px;border-radius:4px;background:${dayTypeColor(x.type)};vertical-align:-2px;margin-right:7px"></span>
+      <strong>${esc(x.type)}</strong>
+      <div class="small muted">Dagregistratie</div>
+    </td>
     <td>${x.mode==='day'?'Hele dag':'Uren'}</td><td>${x.mode==='day'?'—':dayLogLabel(x)}</td>
     <td>${x.mode==='day'?'1 dag':hours(dayLogHoursMs(x))}</td></tr>`).join('');
   todayBody.innerHTML=(projectRows+specialRows)||'<tr><td colspan="4" class="muted">Nog geen uren geregistreerd.</td></tr>';
@@ -513,8 +539,12 @@ function renderOverview(){
 
   const projectRows=series.map((s,i)=>`<tr><td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${colors[i%colors.length]}"></span></td>
     <td><strong>${esc(s.project)}</strong></td><td>${esc(s.position||'-')}</td><td style="text-align:right"><strong>${formatHoursValue(s.total)}</strong></td></tr>`).join('');
-  const specialRows=specialItems.map(x=>`<tr><td>•</td><td><strong>${esc(x.type)}</strong></td><td>${x.mode==='day'?'Hele dag':dayLogLabel(x)}</td>
-    <td style="text-align:right"><strong>${x.mode==='day'?'1 dag':hours(dayLogHoursMs(x))}</strong></td></tr>`).join('');
+  const specialRows=specialItems.map(x=>`<tr>
+    <td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:${dayTypeColor(x.type)}"></span></td>
+    <td><strong>${esc(x.type)}</strong></td>
+    <td>${x.mode==='day'?'Hele dag':dayLogLabel(x)}</td>
+    <td style="text-align:right"><strong>${x.mode==='day'?'1 dag':hours(dayLogHoursMs(x))}</strong></td>
+  </tr>`).join('');
   const summary=`<tr><td></td><td colspan="2"><strong>${overviewMode==='day'?'Dagtotaal uren':'Weektotaal uren'}</strong>${fullDays?`<div class="small muted">+ ${fullDays} hele dag${fullDays===1?'':'en'}</div>`:''}</td>
     <td style="text-align:right"><strong>${formatHoursValue(total)}</strong></td></tr>`;
   overviewBody.innerHTML=(projectRows+specialRows)?projectRows+specialRows+summary:`<tr><td colspan="4" class="muted">Geen registraties in dit ${overviewMode==='day'?'dag':'week'}overzicht.</td></tr>`;
