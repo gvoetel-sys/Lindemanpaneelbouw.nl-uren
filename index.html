@@ -201,7 +201,12 @@ canvas{width:100%;height:auto;display:block}
           <button id="clearSignatureBtn" class="secondary" type="button">Handtekening wissen</button>
           <button id="cancelSignatureBtn" class="secondary" type="button">Annuleren</button>
         </div>
-        <button id="confirmSignatureBtn" class="primary" type="button" style="margin-top:10px">✓ PDF delen</button>
+        <div class="small" style="margin-top:10px;font-weight:800;text-align:center">
+          Vast e-mailadres: g.voetel@lindemanpaneelbouw.nl
+        </div>
+        <button id="confirmSignatureBtn" class="primary" type="button" style="margin-top:8px">✓ PDF delen</button>
+        <button id="downloadPdfBtn" class="secondary" type="button" style="margin-top:8px">⬇ PDF alleen opslaan</button>
+        <button id="mailFixedBtn" class="secondary" type="button" style="margin-top:8px">✉ Mail naar g.voetel@lindemanpaneelbouw.nl</button>
         <div class="small muted" style="margin-top:8px;text-align:center">Je telefoon laat daarna kiezen: WhatsApp, Mail, Opslaan of een andere app.</div>
       </div>
     </div>
@@ -266,6 +271,8 @@ const prevWeekBtn=$('prevWeekBtn'),nextWeekBtn=$('nextWeekBtn'),weekPickerLabel=
 const selectWorkdaysBtn=$('selectWorkdaysBtn'),clearDaysBtn=$('clearDaysBtn'),hoursTitle=$('hoursTitle');
 const specialDate=$('specialDate'),addSpecialDateBtn=$('addSpecialDateBtn');
 const signatureOverlay=$('signatureOverlay'),signaturePad=$('signaturePad'),clearSignatureBtn=$('clearSignatureBtn'),cancelSignatureBtn=$('cancelSignatureBtn'),confirmSignatureBtn=$('confirmSignatureBtn');
+const downloadPdfBtn=$('downloadPdfBtn');
+const mailFixedBtn=$('mailFixedBtn');
 const daySectionToggle=$('daySectionToggle'),daySectionContent=$('daySectionContent'),daySectionArrow=$('daySectionArrow');
 
 let logs=safeParse('projectLogs',[]);
@@ -815,6 +822,39 @@ function makeWeekPdf(data,signatureJpeg){
   xref+=`trailer\n<< /Size ${objs.length} /Root ${CATALOG} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;chunks.push(asciiBytes(xref));return new Blob(chunks,{type:'application/pdf'});
 }
 function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
+
+if(downloadPdfBtn){
+  downloadPdfBtn.addEventListener('click',()=>{
+    if(!sigHasInk){show('Zet eerst je handtekening.');return;}
+    const data=weekExportData();
+    if(!data){closeSignature();show('Geen registraties in deze week.');return;}
+    const exportCanvas=document.createElement('canvas');
+    exportCanvas.width=signaturePad.width;
+    exportCanvas.height=signaturePad.height;
+    const exportCtx=exportCanvas.getContext('2d');
+    exportCtx.fillStyle='#ffffff';
+    exportCtx.fillRect(0,0,exportCanvas.width,exportCanvas.height);
+    exportCtx.drawImage(signaturePad,0,0);
+    const sig=exportCanvas.toDataURL('image/jpeg',0.92);
+    const pdf=makeWeekPdf(data,sig);
+    const range=isoWeekRange(selectedDate());
+    const fileName=`Projecturen_${dateKey(range.start)}_tm_${dateKey(range.end)}.pdf`;
+    downloadBlob(pdf,fileName);
+    show('PDF opgeslagen op je telefoon.');
+  });
+}
+
+
+if(mailFixedBtn){
+  mailFixedBtn.addEventListener('click',()=>{
+    const data=weekExportData();
+    if(!data){show('Geen registraties in deze week.');return;}
+    const subject='Projecturen '+weekLabel(selectedDate());
+    const body=`Hallo,\n\nHierbij het weekoverzicht van ${data.emp} over ${weekLabel(selectedDate())}.\n\nOpen of voeg de opgeslagen PDF toe als bijlage.`;
+    location.href='mailto:g.voetel@lindemanpaneelbouw.nl?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  });
+}
+
 confirmSignatureBtn.addEventListener('click',async()=>{
   if(!sigHasInk){show('Zet eerst je handtekening.');return}
   const data=weekExportData();if(!data){closeSignature();show('Geen registraties in deze week.');return}
@@ -833,8 +873,8 @@ confirmSignatureBtn.addEventListener('click',async()=>{
   const specialLines=data.weekDayLogs.map(x=>`${formatKey(x.date)} - ${x.type}: ${x.mode==='day'?'hele dag':dayLogLabel(x)+' = '+hours(dayLogHoursMs(x))+' uur'}`).join('\n');
   const subject='Projecturen '+weekLabel(selectedDate()),body=`Hallo,\n\nHierbij het ondertekende weekoverzicht van ${data.emp} over ${weekLabel(selectedDate())}.\n\n${lines}${specialLines?'\n\nDagregistraties:\n'+specialLines:''}\n\nWeektotaal uren: ${hours(data.total)} uur`;
   closeSignature();
-  try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:subject,text:body});show('PDF gedeeld. Kies WhatsApp, Mail of een andere app.');return}}catch(err){if(err&&err.name==='AbortError')return}
-  downloadBlob(pdf,fileName);show('PDF is gedownload.');setTimeout(()=>{location.href='mailto:g.voetel@lindemanpaneelbouw.nl?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body)},450);
+  try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file]});show('Kies in het deelmenu WhatsApp, Outlook, Opslaan of een andere app.');return}}catch(err){if(err&&err.name==='AbortError')return}
+  downloadBlob(pdf,fileName);show('PDF is gedownload.');
 });
 
 let deferredPrompt=null;
