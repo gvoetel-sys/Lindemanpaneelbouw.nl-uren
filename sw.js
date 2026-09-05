@@ -1,4 +1,4 @@
-const CACHE='lindeman-projecturen-v20260905-2';
+const CACHE='lindeman-projecturen-v20260905-4';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./logo-icon.png','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>{
   self.skipWaiting();
