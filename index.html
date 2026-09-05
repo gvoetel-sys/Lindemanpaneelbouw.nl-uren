@@ -201,7 +201,8 @@ canvas{width:100%;height:auto;display:block}
           <button id="clearSignatureBtn" class="secondary" type="button">Handtekening wissen</button>
           <button id="cancelSignatureBtn" class="secondary" type="button">Annuleren</button>
         </div>
-        <button id="confirmSignatureBtn" class="primary" type="button" style="margin-top:10px">✓ PDF delen via Gmail</button>
+        <button id="confirmSignatureBtn" class="primary" type="button" style="margin-top:10px">✓ PDF delen</button>
+        <div class="small muted" style="margin-top:8px;text-align:center">Je telefoon laat daarna kiezen: WhatsApp, Mail, Opslaan of een andere app.</div>
       </div>
     </div>
 
@@ -832,7 +833,7 @@ confirmSignatureBtn.addEventListener('click',async()=>{
   const specialLines=data.weekDayLogs.map(x=>`${formatKey(x.date)} - ${x.type}: ${x.mode==='day'?'hele dag':dayLogLabel(x)+' = '+hours(dayLogHoursMs(x))+' uur'}`).join('\n');
   const subject='Projecturen '+weekLabel(selectedDate()),body=`Hallo,\n\nHierbij het ondertekende weekoverzicht van ${data.emp} over ${weekLabel(selectedDate())}.\n\n${lines}${specialLines?'\n\nDagregistraties:\n'+specialLines:''}\n\nWeektotaal uren: ${hours(data.total)} uur`;
   closeSignature();
-  try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:subject,text:body});show('PDF gedeeld. Kies Gmail.');return}}catch(err){if(err&&err.name==='AbortError')return}
+  try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:subject,text:body});show('PDF gedeeld. Kies WhatsApp, Mail of een andere app.');return}}catch(err){if(err&&err.name==='AbortError')return}
   downloadBlob(pdf,fileName);show('PDF is gedownload.');setTimeout(()=>{location.href='mailto:g.voetel@lindemanpaneelbouw.nl?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body)},450);
 });
 
