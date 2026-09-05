@@ -77,7 +77,7 @@ canvas{width:100%;height:auto;display:block}
   </div>
   <h1>Projecturen</h1>
   <div class="sub">Handmatig projecturen registreren</div>
-  <div id="appVersion" class="small muted" style="text-align:center;margin-top:4px">Versie 9 • meerdere registraties zichtbaar</div>
+  <div id="appVersion" class="small" style="text-align:center;margin-top:6px;font-weight:900;color:#d71920">VERSIE 10 • toetsenbordfix + projecttelling</div>
   <div style="margin-top:10px">
     <button id="installBtn" class="primary" type="button" style="display:none">⬇ Installeer app</button>
   </div>
@@ -297,6 +297,10 @@ function makeDateTime(dateStr,timeStr){const [y,m,d]=dateStr.split('-').map(Numb
 function timestampOnDate(dateStr,sourceTs){const d=new Date(sourceTs);return makeDateTime(dateStr,`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`)+d.getSeconds()*1000+d.getMilliseconds()}
 function show(msg){notice.textContent=msg;notice.style.display='block';notice.scrollIntoView({behavior:'smooth',block:'nearest'})}
 function hide(){notice.style.display='none'}
+function closeKeyboard(){
+  const el=document.activeElement;
+  if(el && typeof el.blur==='function') el.blur();
+}
 function selectedDate(){return workDate.value||todayKey()}
 
 function netMs(start,end){
@@ -465,14 +469,14 @@ function render(){
       .sort((a,b)=>a.start-b.start);
 
     const sessionLines=sessions.map((p,i)=>{
-      return `<div style="white-space:nowrap"><strong>${i+1}.</strong> ${fmtTime(p.start)}–${fmtTime(p.end)} <span class="small muted">(${hours(netMs(p.start,p.end))} u)</span></div>`;
+      return `<div style="white-space:nowrap;margin-bottom:3px"><strong>Rit ${i+1}:</strong> ${fmtTime(p.start)}–${fmtTime(p.end)} <span class="small muted">(${hours(netMs(p.start,p.end))} u)</span></div>`;
     }).join('');
 
     return `<tr>
       <td>
         <strong>${esc(x.project)}</strong>
         <div class="small muted">${x.positions.size?'Positie: '+esc(Array.from(x.positions).join(', ')):''}</div>
-        ${sessions.length>1?`<div style="display:inline-block;margin-top:5px;padding:4px 7px;border-radius:999px;background:#fde8e9;color:#9f1117;font-size:12px;font-weight:900">${sessions.length}x gestart</div>`:''}
+        ${sessions.length>1?`<div style="display:inline-block;margin-top:6px;padding:5px 9px;border-radius:999px;background:#d71920;color:#fff;font-size:13px;font-weight:900">${sessions.length} REGISTRATIES</div>`:''}
       </td>
       <td>${esc(Array.from(x.worktypes).join(', ')||'-')}</td>
       <td>
@@ -558,25 +562,25 @@ function stopActive(){
   active=null;save();
 }
 
-startBtn.addEventListener('click',()=>{
+startBtn.addEventListener('click',()=>{closeKeyboard();
   hide();
   const name=employee.value.trim(),proj=project.value.trim();
-  if(!name){show('Vul eerst de naam van de medewerker in.');employee.focus();return}
-  if(!proj){show('Vul eerst een projectnummer in.');project.focus();return}
-  if(!workDate.value){show('Kies eerst een werkdatum.');workDate.focus();return}
+  if(!name){show('Vul eerst de naam van de medewerker in.');return}
+  if(!proj){show('Vul eerst een projectnummer in.');return}
+  if(!workDate.value){show('Kies eerst een werkdatum.');return}
   if(clearedDayKey===selectedDate()){clearedDayKey='';localStorage.removeItem('clearedDayKey')}
   active={employee:name,project:proj,position:position.value.trim(),worktype:worktype.value,description:description.value.trim(),liveStart:Date.now(),workDate:selectedDate()};
   save();render();
 });
-stopBtn.addEventListener('click',()=>{if(!active)return;stopActive();project.value='';position.value='';description.value='';save();render();project.focus()});
-endDayBtn.addEventListener('click',()=>{
+stopBtn.addEventListener('click',()=>{closeKeyboard();if(!active)return;stopActive();project.value='';position.value='';description.value='';save();render()});
+endDayBtn.addEventListener('click',()=>{closeKeyboard();
   hide();if(active)stopActive();project.value='';position.value='';description.value='';
   clearedDayKey=selectedDate();localStorage.setItem('clearedDayKey',clearedDayKey);save();render();
   show('Werkdag opgeslagen. De uren blijven in het weekoverzicht.');
 });
 
 dayMode.addEventListener('change',()=>manualTimeFields.style.display=dayMode.value==='hours'?'block':'none');
-addDayBtn.addEventListener('click',()=>{
+addDayBtn.addEventListener('click',()=>{closeKeyboard();
   hide();
   if(active){show('Stop eerst het actieve project voordat je een dagregistratie toevoegt.');return}
   const dates=Array.from(selectedSpecialDates).sort();
@@ -598,7 +602,7 @@ addDayBtn.addEventListener('click',()=>{
 
 modeBtn.addEventListener('click',()=>{overviewMode=overviewMode==='day'?'week':'day';localStorage.setItem('overviewMode',overviewMode);renderOverview()});
 workDate.addEventListener('change',()=>{save();if(specialDate)specialDate.value=selectedDate();pickerMonday=mondayFromKey(selectedDate());renderWeekPicker();render()});
-todayBtn.addEventListener('click',()=>{workDate.value=todayKey();if(specialDate)specialDate.value=workDate.value;localStorage.setItem('selectedWorkDate',workDate.value);pickerMonday=mondayFromKey(workDate.value);renderWeekPicker();render()});
+todayBtn.addEventListener('click',()=>{closeKeyboard();workDate.value=todayKey();if(specialDate)specialDate.value=workDate.value;localStorage.setItem('selectedWorkDate',workDate.value);pickerMonday=mondayFromKey(workDate.value);renderWeekPicker();render()});
 [employee,project,position,description].forEach(el=>el.addEventListener('input',save));
 worktype.addEventListener('change',save);
 
@@ -751,6 +755,9 @@ pickerMonday=mondayFromKey(selectedDate());
 if(specialDate)specialDate.value=selectedDate();
 renderWeekPicker();
 setInterval(()=>{if(active)save()},30000);
+document.addEventListener('click',e=>{
+  if(e.target && e.target.tagName==='BUTTON') closeKeyboard();
+},true);
 window.addEventListener('resize',renderOverview);
 render();
 })();
