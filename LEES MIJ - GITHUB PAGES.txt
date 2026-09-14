@@ -1,0 +1,20 @@
+URENREGISTRATIE v1.52 - GITHUB PAGES
+
+Deze versie repareert het app-icoon op Android/Chrome.
+
+BELANGRIJK:
+1. Upload ALLE bestanden uit deze map opnieuw naar dezelfde GitHub-repository.
+2. Overschrijf de bestaande bestanden.
+3. Wacht ongeveer 1-2 minuten tot GitHub Pages opnieuw is gepubliceerd.
+4. Verwijder de oude snelkoppeling 'Urenregistratie' van het startscherm.
+5. Open de GitHub Pages-link opnieuw in Chrome.
+6. Ververs de pagina één keer.
+7. Tik op ⋮ > Toevoegen aan startscherm / App installeren.
+
+Waarom dit nodig was:
+De oude versie verwees voor het manifest en de iconen naar de hoofdmap van github.io.
+Bij een GitHub Pages-project staat de app in een submap. Daardoor vond Chrome het icoon niet
+en liet Android een grijs standaardicoon met de letter G zien.
+
+Deze v1.52 gebruikt relatieve paden en nieuwe versienamen voor de iconen, zodat de oude cache
+niet opnieuw wordt gebruikt.
